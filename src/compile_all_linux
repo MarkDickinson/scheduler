@@ -1,0 +1,137 @@
+#!/bin/bash
+#
+# Syntax: ./compile_all_linux /path/to/top/of/install/tree
+#
+# ASSUMPTIONS: You already have a directory structure in place
+#              for the job scheduler from a previous install.
+# 
+#
+MAXCC=0
+## ------------------------------------------------------------------------
+## Where are we putting the binaries
+## ------------------------------------------------------------------------
+## Set the target directory
+installdir=$1
+if [ "${installdir}." = "." ];
+then
+   # targetdir="/opt/dickinson/js_testing/bin"
+   installdir="/opt/dickinson/job_scheduler"
+   targetdir="/opt/dickinson/job_scheduler/bin"
+else
+   targetdir="${installdir}/bin"
+fi
+if [ ! -d ${targetdir} ];
+then
+   echo "*error* ${installdir} does not exist"
+   echo "The recompile expects an existing scheduler directory tree"
+fi
+
+## ------------------------------------------------------------------------
+## build the system description header file we need
+## ------------------------------------------------------------------------
+
+## Ensure the system_type.h is set for LINUX
+echo "#ifndef SYSTEM_TYPE" > system_type.h
+echo "#define SYSTEM_TYPE" >> system_type.h
+
+systype=`uname -s`
+case "${systype}" in
+   "Linux") echo "#define LINUX" >> system_type.h ;;
+   "SunOS") echo "#define SOLARIS" >> system_type.h ;;
+   *)       echo "#define LINUX" >> system_type.h ;;
+esac
+
+## Major changes in GCC between version 3 and 4 broke the code, 
+## need to check for that as well.
+## We use the DEFINE GCC_MAJOR_VERSIONn to control which blocks
+## of the source code get compiled based on what version of the
+## compiler is being used to try to resolve those issues.
+## That is set in system_type.h AND USED BY ALL CODE MODULES.
+gcc_version=`gcc --version | grep "gcc (GCC)" | awk {'print $3'}`
+gcc_major_version=`gcc --version | grep "gcc (GCC)" | awk {'print $3'} | awk -F. {'print $1'}`
+echo "#define GCC_MAJOR_VERSION${gcc_major_version}" >> system_type.h
+
+echo "#endif" >> system_type.h
+
+if [ "${gcc_version}." != "3.4.2." ];
+then
+   echo "**Warning** This has only been tested sucessfully compiled under GCC version 3.4.2"
+   echo "            or below, and GCC version 4.5.1 and above"
+   if [ "${gcc_version}." = "4.1.1." ];
+   then
+      echo "**CRITICAL** This is known to go into a hard loop when"
+      echo "             compiled under GCC version 4.1.1, something"
+      echo "             to do with the socket IO changes in GCC."
+   else
+      echo "**Warning** you may have issues with any other compiler version."
+   fi
+fi
+
+## ------------------------------------------------------------------------
+## Just make sure the MAXCC has the highest error code
+## ------------------------------------------------------------------------
+testcc() {
+  lastcc=$1
+  if [ ${lastcc} -gt ${MAXCC} ]
+  then
+     MAXCC=${lastcc}
+  fi
+} 
+
+## ------------------------------------------------------------------------
+## Build the main application.
+## ------------------------------------------------------------------------
+echo "Compiling server modules, wait..."
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused alerts.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type calendar.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused config.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type jobslib.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused schedlib.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type utils.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused api.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused server.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type bulletproof.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type users.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type calendar_utils.c
+testcc $?
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type memorylib.c
+testcc $?
+gcc alerts.o calendar.o config.o jobslib.o schedlib.o \
+ utils.o api.o server.o bulletproof.o \
+ users.o memorylib.o -o ${targetdir}/jobsched_daemon
+testcc $?
+
+echo "Compiling command line interface, wait..."
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type jobsched_cmd.c
+testcc $?
+gcc calendar_utils.o bulletproof.o utils.o api.o memorylib.o jobsched_cmd.o -o ${targetdir}/jobsched_cmd
+testcc $?
+
+## ------------------------------------------------------------------------
+## Build some utility tools
+## ------------------------------------------------------------------------
+echo "Building utility tools, wait..."
+gcc -c -D_GNU_SOURCE -Wall -Wreturn-type jobsched_take_snapshot.c
+testcc $?
+gcc utils.o memorylib.o jobsched_take_snapshot.o -o ${targetdir}/jobsched_take_snapshot
+testcc $?
+gcc -o ${targetdir}/explain_errno explain_errno.c
+testcc $?
+gcc -o ${targetdir}/jobsched_security_checks jobsched_security_checks.c 
+testcc $?
+gcc -o ${targetdir}/jobsched_jobutil jobsched_jobutil.c 
+testcc $?
+
+rm -rf *.o
+echo "Done !, binaries placed into ${targetdir}"
+exit ${MAXCC}

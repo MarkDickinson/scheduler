@@ -1,0 +1,26 @@
+History:
+  The CGI interface was OK for operations monitoring, but as there was no real
+  user tracking (all cgi scripts ran under the apache id) the admin functions
+  were never added to the cgi interface.
+  Tomcat with it's session tracking should allow each job scheduler user to
+  login as their real scheduler userid, and allow a full function interface.
+  [ Real reason: I wanted to play with JSP pages ]
+
+Nov 2003, Installed Tomcat and started porting the CGI interface to JSP.
+Dec 2003, Socket pooling and User objects working & tested, job status display running.
+Feb 2004, All CGI functions ported. Working on new functionality.
+Mar 2004, All common command line functions now available through the JSP interface.
+Mar 2004, Added a buffer check and if required a delay when reading replies from
+          servers (sometimes was reading before data had been fully read back).
+
+KNOWN ISSUES:
+1. Offset error from one of the command screens (can't remember which and
+   after a disk crash have restored back onto a new (much larger yippee) disk
+   from last months backups, which don't contain my debug notes on the issue
+   which is a shame as it was a really easy fix).
+2. The automatic screen refreshes don't work under mozilla (any version).
+   Everything still works A-OK under IE.
+
+WORK TO DO:
+1. Add online help
+2. Add scheduler control and debugging options ?

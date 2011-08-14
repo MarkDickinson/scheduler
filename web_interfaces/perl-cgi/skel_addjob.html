@@ -1,0 +1,108 @@
+#!/usr/bin/perl
+require "../cgi-lib.pl";
+require "scheduler-lib.pl"
+
+# print the HTML header
+print &PrintHeader;
+print &scheduler_HtmlTop("Scheduler Status Display, (c)Mark Dickinson 2001");
+
+#  first unbuffer stdout and flush it
+select((select(STDOUT), $| = 1)[0]);
+print "";
+$pid = open(PIPE, "-|");
+# in the child process the pid is 0
+# if we are the child sent the query and exit.
+if ($pid == 0) {
+    open(CMDPGM, "| &scheduler_cmdprog()") || die("Could not start command line interface.");
+    print CMDPGM "SCHED LISTALL\n";
+    print CMDPGM "EXIT\n";
+    close CMDPGM;
+    exit;
+  }
+  # if we are the parent we wish to read the results of the query.
+  @result = <PIPE>;
+  print "<br>\n";
+  print "<pre>\n";
+  print "<form action=\"/cgi-bin/scheduler/scheduler_parse_statusscreen_cmd.pl\" method=post>\n";
+  print "<pre>\n";
+  print "Name of person taking the video:\n";
+  print "<input type=text name=lentto size=30 maxlength=30>\n\n";
+  print "Contact phone number of borrower\n";
+  print "<input type=text name=phone size=15 maxlength=15>\n\n";
+  print "Date lent out\n";
+  print "<input type=text name=ondate size=20 maxlength=20>\n\n";
+  print "The available titles matching your search criteria are listed below\n";
+  print "Select the title you wish to have booked out\n";
+  print "<select name=title size=5 multiple>\n";
+  # ignore some of the lines returned and display the rest
+  for (@result) {
+    next if /miniSQL/;
+    next if /mSQL/;
+    next if /Bye\!/;
+    $dataline = substr( $_, 0, length($_) );
+    $xx = substr($dataline,0,3);
+    if ($xx eq " | ") {
+      # if we have a data output line strip the data from between the borders
+      # get title out
+      $nextbar = index( $dataline, "|", 3 );
+      $title = substr( $dataline, 2, $nextbar - 4 );
+      # if $title = 'title' we are parsing the header columns so skip out
+      $xy = substr( $title, 0, 6 );
+      if ($xy eq " title") { next; }
+      #
+      # else its a title so use it.
+      print "<option>",$title;
+      next;
+    }   # else ignore
+  }
+  print "</select>\n";
+  print "<input type=\"submit\" value=\"Book Out Selected Video\">  <input type=\"reset\">\n";
+  print "</form>\n";
+  print "</pre>\n";
+}
+else {
+# else assume an exact search is required and the user has the title
+  # create a child process to send the query to the interpreter
+  #  first unbuffer stdout and flush it
+  select((select(STDOUT), $| = 1)[0]);
+  print "";
+  $pid = open(PIPE, "-|");
+  # in the child process the pid is 0
+  # if we are the child sent the query and exit.
+  if ($pid == 0) {
+    # run the sql interpreter and send it the query
+    open(MSQL, "| $msql $dbname") || die("Could not start SQL interpreter.");
+    print MSQL "update videos set lo='*' where title = '".$title."'\\g\n";
+    print MSQL "insert into videos_lent (title, lentto, phone, ondate)
+     values ('".$title."','".$lentto."','".$phone."','".$ondate."')\\p\\g\n";
+    print MSQL "\\q\n";
+    close MSQL;
+    exit;
+  }
+  # if we are the parent we wish to read the results of the query.
+  @result = <PIPE>;
+  # print the HTML header
+  print &PrintHeader;
+  print &HtmlTop("Book out ".$title." results");
+  print "<br>\n";
+  # ignore some of the lines returned and display the rest
+  for (@result) {
+    next if /miniSQL/;
+    next if /mSQL/;
+    next if /Bye\!/;
+    print $_;
+  }
+}
+# common fields
+print "<br>\n";
+print "<hr>\n";
+print "<br>\n\n";
+print "<a href=\"".&MyServerName()."/videos/index.html\">
+Main Video Index</a>\n<br>\n";
+print "<a href=\"".&MyServerName()."/index.html\">Tec_Tan Home Page</a>\n";
+print "<br><hr>\n";
+print &HtmlMail();
+print &HtmlBot;
+
+exit;
+__END__

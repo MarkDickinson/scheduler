@@ -1,0 +1,91 @@
+Obviously you need to have at least one running job scheduler running
+in order to use this.
+You also need a web server running (a copy of the job scheduler must
+be running on the server that hosts the web server, the cgi-scripts
+need to use it).
+
+This is really old. My testing notes say it works under IE5 and
+Netscape 6; but automatic refresh doesn't work under Mozilla.
+So I stopped using this before Firefox existed, wow it's old.
+But it may be usefull to you so give it a try.
+
+The steps are
+  (1) customise the configuration file
+  (2) copy the files into place on one of you webservers
+  (3) update the webserver httpd.conf
+  (4) add the webserver user as a valid job scheduler user
+  (5) point a web browser to it and enjoy
+and the steps are covered in a bit more detail below
+
+(1) edit scheduler-lib.pl in two places, the first is required BUT
+    you only need to edit in the second place if you intend to use
+    this to monitor multiple servers all running the job scheduler
+    - at the start of the file change 'falcon' to your webserver name,
+      change 9002 (default so only change if you changed it) to the
+      tcpip port you configured for the scheduler, change the path
+      /opt/job_scheduler to where you installed the application,
+      lastly check /scheduler-icons/ is the alias you will use when
+      you customise your httpd.conf
+           # --------------- customise for your site -------------
+           sub scheduler_HTTPD_Home {
+             return "http://falcon/cgi-bin/scheduler";
+           }
+           sub scheduler_port {
+             return "9002";
+           }
+           sub scheduler_cmdprog {
+              my $useport=&scheduler_port();
+              return "/opt/job_scheduler/bin/jobsched_cmd ${useport}";
+           }
+           sub scheduler_icon_path {
+             return "/scheduler-icons/";
+           }
+           # ---------- end of customisation changes -----------
+     
+    - at the end of the file IF YOU WANT TO MONITOR MULTIPLE SCHEDULERS
+      change subroutine scheduler_system_list (the last subroutine in
+      the file)
+
+         [ all references to X are numbers, counting up from 1 (not from 0) ]
+
+         for each system to be monitored add a $hostnameX and $ipaddrX
+         reflecting the hostname and ipaddress of the system to be
+         monitored, INCLUDING the correct name (not localhost) of the
+         local server.
+         in the GETNAME checks ensure you have a check for each
+         $hostnameX entry
+         in the GETIPADDR checks ensure you have a check for each
+         $ipaddrX entry
+         When you are happy with the changes change the $sysnamecount
+         value to the highest number of entries you have added. This is
+         returned to all the web scripts when they want to know how
+         many entries to query so must match the entries you have added.
+         THE SUPPLIED SPECIAL CASE OF 0 will always just use the
+         special 'localhost' entry.
+
+      You MUST leave in the entries for $localhostname and $localhostip
+      as these are the "catch-all's". They provide the standalone
+      functionality when the $sysnamecount is 0. 
+
+(2) copy the files into your webserver cgi-bin directory,
+    for example if you are using the default /var/www/cgi-bin then
+      mkdir /var/www/cgi-bin/scheduler
+      cp -R * /var/www/cgi-bin/scheduler
+      chown -R apache:apache /var/www/cgi-bin/scheduler
+    and if you have selinux enabled also (for FC15 anyway)
+      chcon -R system_u:object_r:httpd_sys_script_exec_t:s0 /var/www/cgi-bin/scheduler
+
+(3) update your webserver httpd.conf, normaly in /etc/httpd/conf
+    There will be a section in there defining aliases, add
+       Alias /scheduler-icons/ /var/www/cgi-bin/scheduler/icons/
+    Restart your web server to pick up the change
+
+(4) add the webserver user as a valid scheduler user
+    If you have multiple servers running the job scheduler do this
+    for every one you configured in step 1 to be monitored.
+    As an admin user on each server to be monitored from the 
+    jobsched_cmd interface use the command
+      user add apache,password apache,autoauth yes,auth operator,desc "Web Operator id"
+
+(5) Point a web browser to it and enjoy
+    http://servername/cgi-bin/html_job_status.pl

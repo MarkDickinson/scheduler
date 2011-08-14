@@ -1,0 +1,54 @@
+.ig \"-*- jobsched_take_snapshot -*-
+Copyright (C) 2001 Mark Dickinson
+Marks Job Scheduler is distibuted under the terms of the GNU GPL.
+..
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+.\" Like TP, but if specified indent is more than half
+.\" the current line-length - indent, use the default indent.
+.de Tp
+.ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
+.el .TP "\\$1"
+..
+.TH jobsched_take_snapshot 1 "August-14-2011" "Marks Job Scheduler v1.13"
+.SH PROGRAM NAME
+.B jobsched_take_snapshot
+\- A utility to take a 'current state' backup of the scheduler databases
+.SH INTRODUCTION
+jobsched_take_snapshot has one purpose, to dump out the databases used by Marks Job Scheduler as a command file that can then be piped into the jobsched_cmd program to recreate the databases (almost exactly, exceptions as below) exactly as they were at the point the backup was performed.
+
+The command file created will need to be manually edited before use. The job submit commands will be commented (no pint in restoring the active job queue if the backup is days old) and of course user passwords cannot be determined so you will have to assign new passwords to each user.
+
+To actually use the file to restore the databases please refer to the manual shipped with the application, as obviously it will involve deleting the old databases and you should not use rm commands without refering to the manual in order to know why.
+
+.SH INVOCATION
+The format for invoking jobsched_take_snapshot is:
+       jobsched_take_snapshot /path/to/install/dir \fR
+
+or recomended as the output is sent to sdtout :-)
+       jobsched_take_snapshot /path/to/install/dir > /some/backup/file.txt \fR
+.TP
+The /path/to/install/dir is the directory where Marks Job Scheduler has been installed (where the *.dbs files the application uses will be) \fR
+
+.SH AUTHOR
+Mark Dickinson http://www.mdickinson.dnsalias.org/site_support/contact_mark.php
+.SH BUGS
+Report bugs to the address above.
+Give a detailed description of the problem and report the version of Marks Job Scheduler that you are using.
+.SH COPYRIGHT
+Copyright \(co 2001 Mark Dickinson
+.LP
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program (gpl-2.0.txt); if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA., or refer to the online version at http://www.gnu.org/licenses/gpl-2.0.html
+.LP
+.SH AVAILABILITY
+It is intended that the latest stable source version will always be available on github at xxxxx-insert-here-xxxxx, prebuilt static binary packages built on Fedroa 15 or above are available at http://mdickinson.dnsalias.org/linux/doc/Job_Scheduler_about.php
+.LP
+.SH SEE ALSO
+jobsched_daemon (1), jobsched_cmd (1), jobsched_utilities (1), jobsched_jobutil (1), jobsched_security_checks (1)

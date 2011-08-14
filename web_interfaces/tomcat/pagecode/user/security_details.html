@@ -1,0 +1,139 @@
+<HEAD><TITLE>Security Details Document - new users</TITLE></HEAD>
+<BODY>
+<H1>Security Details</H1>
+<p>
+This page <b>covers some of the key fields in a user record</b>. It
+is not intended to replace the manuals that were shipped with the
+product. For full details of how user authority works you <b><em>must</em></b>
+refer to the manuals.<br>
+This page provides only a brief description of what fields on the
+add user JSP interface screen relate to.
+</p>
+<h2>User Authority Level</h2>
+<p>
+Users are defined in a role based model, limiting access to the role thay
+can perform.<br>
+Scheduler functional management classes are in a very basic form
+<ul>
+<li>user management</li>
+<li>schedule database management, creation/deletion of jobs and calendars</li>
+<li>interactive control of job flows on the current scheduling queue</li>
+</ul>
+The user authority levels relect this, the user authority classes you may add a
+user to are one of
+<ul>
+<li><b>0 - guest</b>,<br> has read access to active scheduler queues, job
+and calendar databases, and user databases. Can change and control
+nothing.</li>
+<li><b>O - Operator</b>,<br> has read access to everything. <b>Full control
+of jobs on the active scheduler queue</b>; which is can reque
+failed jobs and do alert management tasks, can clear job dependencies,
+override job scheduling times for the active days job etc. Only has
+control of the active days batch jobs. Can manually submit jobs from
+the job database but <b>does not</b> have access to
+create/delete/alter jobs, calendars or user details. Has read access to
+everything</li>
+<li><b>J - Job authority</b><br> is for the batch scheduling teams. Users
+at this authority level can create/alter/delete definitions for jobs
+and calendars. The <b>cannot</b> submit the jobs to the scheduler
+active queue or manage the jobs in any way once they are on the active
+queue (thats the operators role). Has read access to everything.
+<li><b>S - Security</b><br> is for the security teams. Has the ability to
+add and delete users, and change user passwords. Has <b>no access to
+the job or calendar databases, and cannot control jobs on the
+active scheduler queue</b>; altough theres nothing to stop a
+security user adding themselves a new record with full access, I guess
+you have to just trust them. Has read access to everything.</li>
+<li><b>A - Admin, should only be granted to the server
+administrators</b>.<br> Has full access to resolve problems in all
+databases (user, job, calendar) and control of the active job queue.
+<b>In addition</b> the admin user can control the job scheduler(s)
+itself, to customise newday times, alert forwarding options, debug and
+trace options etc. <b>This is a requirement of the server administrator
+and the server administrators/systems programmers should have
+this access reguardless of any concerns your security department
+may have</b>. Any site where server administrators/systems
+programmers do not have full admin rights is in violation of any
+support contracts signed, and the site committing the offence will not
+be permitted to lodge fault calls.</li>
+</ul>
+<b>Note</b>: the unix level <b><em>root</em></b> user is always permitted
+to autologin (see below) to the admin level for problem resolution
+purposes. This isn't a security risk as your site obviously has access
+to the root userid tightly controlled; which is why server admins and
+systems programmers should be granted full admin access, they should
+not have keep running around demanding the root signon just to
+manage the job scheduler application.
+</p>
+<h2>Command line autologin allowed</H2>
+<p>This is not considered a security risk. This is designed to allow
+support staff and general users to get on with thier jobs with a
+minimum of complexity.<br>
+If this is set to <b>yes</b> then a user logged on to a unix server
+under a unix level userid (presumably a personal id), that exactly
+matchers a job scheduler userid, can use the autologin command to log
+onto the job scheduler application without needing to enter their
+password.<br><br>
+This is not considered a security  risk as
+<ul>
+<li>They have already logged onto the unix server natively, so
+are a valid user</li>
+<li>logging onto the scheduler only grants them the scheduler
+authority rights the matching userid has within the job
+scheduler.</li>
+</ul>
+It also allows batch jobs to be run against the scheduler without hard
+codeing a password in scripts.<br>
+<b>Note:</b> as mentioned above, the unix level <b><em>root</em></b> user can
+always autologin to full administrator level through the command line
+interface.
+</p>
+<h2>Able to add users</h2>
+<p>
+There is a <b>subsetauth</b> facility designed to allow the security department to offload some of
+the work involved in adding user to department managers.<br>Also occasionally,
+although I would expect infrequently there would be a requirment to allow a user
+not in the security department to fully manage user records. This would
+probably be in a large site an operations shift leader needing to change
+passwords or add on-the-fly records for support staff during out-of-hours
+problem resolution.<br>
+There is a special flag in the user record for this. For the puposes of the
+user add screen you invoked this page from the descriptions are
+<ul>
+		<li><b>No</b>, the simple one, they cannot manage users</li>
+		<li><b>SubSet Auth</b>, for managers. They can add user records for new
+		users up to the authority they have been granted; for example if a
+		<b>Job</b> authority manager can create job records for users A, B and
+		C, and have subsetauth authority they can create other user records for
+		people that will be allowed to define jobs to run under the unix userid of one, two or all three of those
+		users; but not any additional users.<br>
+		<b>Note:</b> users with subsetauth cannot delete or modify users once
+		they have been added, so care should be taken in granting this to
+		ensure it is only given to managers that sign in blood that they will
+		always inform the security department when a user leaves</li>
+		<li><b>Full security authority</b>, is effectively granting the user
+		all rights of the security authority level group on top of their own
+		authority rights. This should be reserved for out-of-hours support
+		staff or fire-call userids.</li>
+</ul>
+</p>
+<h2>The unix userid fields</h2>
+<p>
+The job scheduler servers run in the unix (Linux primarily) environment, and
+as such need a legal unix userid to run jobs under.
+In the fields provided on the form for this enter a list of unix level
+userids that the user is able to define jobs for. <b>Ensure you only
+add authority to unix userids the appropriate department manager
+has approved and taken responsibility for</b>, as theres nothing to stop
+the user you are about to add coding a 'rm -rf' command under an entered
+userid.
+</p>
+<p>
+For the purposes of this help page, any userid(s) you enter in the fields here
+will grant the job scheduler user you are about to add the ability to run any
+job they wish to run under the userid(s) you enter.
+</p>
+<br><br>
+<table width="100%" border="3"><tr><td>Use the browser back button to return to the user add page</td></tr></table>
+</BODY>
+</HTML>

@@ -1,0 +1,15 @@
+The alerts_custom.txt should be customised and copied into the
+directory you installed the job scheduler into. You can create
+customised alert messages for a range of job exit codes here.
+That is covered in the main INSTALLING document for this app.
+
+The two .sh files are 'stub' sctipts the scheduler can use to
+forward alerts to external monitoring tools. By default this 
+feature is not enabled but can be simply enabled (refer to the manuals)
+
+Or quick start, as an admin authority user enter...
+   SCHED ALERT FORWARDING EXECRAISECMD /full/path/to/raise_alert.sh
+   SCHED ALERT FORWARDING EXECCANCELCMD /full/path/to/end_alert.sh
+
+You should customise the two scripts to fit your environment before
+enabling them of course.

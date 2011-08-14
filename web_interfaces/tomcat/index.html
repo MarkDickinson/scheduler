@@ -1,0 +1,50 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Final//EN">
+<HTML><HEAD><TITLE>Marks Job SCheduler, &copy Mark Dickinson 2002, 2003, 2004</TITLE></HEAD>
+<BODY>
+<H1>Welcome</H1>
+<p>
+If you have hit this page you don't have your bookmark to the application
+setup correctly. You should probably bookmark the logon page. You can reach the
+logon page using the link below.
+</p>
+<table border="1" cellpadding="5"><tr><td width="70%">
+<p>
+The job scheduler JSP interface is designed to provide a frontend to <b>Marks
+Job Scheduler, &copy Mark Dickinson 2002, 2003, 2004</b> application.
+By providing the interface as a Tomcat JSP application I am able to provide
+full session authentication for authorised scheduler users, enabling the JSP
+code to implement the role segregation functions designed into the scheduler
+application itself; by performing authorisations against the scheduler
+databases and using Tomcats inherent session tracking ability.
+</p>
+</p>
+It has also allowed the use of permanent re-useable socket connection pool 
+entities which significantly cuts down on connection overheads.
+</p>
+</td><td>
+<small>
+		<b>Job Scheduler Highlights</b><br>
+		<ul>
+				<li>Separation of user function by role</li>
+				<li>Job dependency on other jobs <b>and</b> files</li>
+				<li>Job and Holiday Calendar support</li>
+				<li>Runs jobs under multiple userids, full control of who can
+				add jobs for a given userid</li>
+				<li>Apache operator interface, to monitor and control the
+				active job queues of multiple servers from one screen</li>
+				<li>Tomcat interface to provide full control of all networked
+				job schedulers</li>
+				<li>Full job audit trail history</li>
+				<li>Security reporting tools provided</li>
+		</ul>
+</small>
+</td></tr></table>
+<H1>Testing Links</H1>
+<ol>
+		<li><a href="SCHEDPoolPage.jsp?pagename=logon">Logon to the application</a></li>
+		<li><a href="SCHEDPoolPage.jsp?pagename=showConnectionPool">Show Connection Pool Status</a></li>
+		<li><a href="SCHEDPoolPage.jsp">Main test page</a></li>
+</ol>
+End of default page
+</BODY>
+</HTML>

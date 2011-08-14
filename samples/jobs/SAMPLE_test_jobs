@@ -1,0 +1,154 @@
+# This is a set of test jobs provided so you may see how the scheduler
+# functionality works.
+# 
+#   The job scheduler server needs to be running to add the jobs
+# 
+#   -----> installation: "cat SAMPLE_test_jobs | ./jobsched_cmd" <-----
+# 
+# ************************ CUSTOMISE FIRST *********************
+# You will need to customise this file as follows (USING AN EDITOR THAT HANDLES
+# LONG LINES).
+# 
+#    1) Replace all <yourowner> with the userid you will be running the test jobs
+#       as. This should not be root.
+#    2) Replace all <yourjobdir> with the location of the jobs directory path you
+#       have defined for your installation, WHICH MUST contain the sample jobs.
+#    3) Replace <date> with the current days date as YYYYMMDD
+#    Note: The sample NULL-ARCHIVE-JOBS job runs as root, as it must archive log
+#          files created by any user.
+# 
+#    Tips: sample 'vi' global replace commands
+#          :%s/<yourowner>/mark/
+# 		   :%s/<yourjobdir>/\/opt\/job_scheduler/
+#          :%s/<date>/20020413/
+#    note: the \ before the / to indicate its a special char in the string.
+# 
+#    note2: The sample scripts will run OK, but you may wish to change
+#           the daily snapshot (currently backs up to a path under the
+#           server program directory) and the weekly log archive (currently
+#           backs up to a directory under the logs directory).
+# ***************************************************************
+# 
+# They sample jobs are
+# 
+# +-- TEST-FAIL-AND-RESTART ---> fails and goes onto alert queue
+# |                            test 'ALERT RESTART' command, the restarted job
+# |                            will complete ok and satsify one dependency for
+# |                            TEST-JOB-DEP
+# |
+# |  TEST-CREATE-TEST-FILE ---> creates the test file waited for by TEST-FILE-DEP
+# |  +--[ file on disk ]
+# |  | 
+# |  |
+# +->+--->TEST-FILE-DEP (waits on TEST-FAIL-AND-RESTART + a test file)
+# |
+# |
+# +--> TEST-JOB-DEP (waits on TEST-FILE-DEP + TEST-FAIL-AND-RESTART)
+# 
+#   TEST-RUN4-60MINS ---> a long running job to 'hold' a queue busy.
+# 
+#   TEST-REPEAT ---> tests the repeating job function every 15 minutes
+# 
+#   MANY-JOB-1 through 5 ---> test maxjobs running handling and relief handling.
+# 
+# 
+# They perform the following functions...
+# 
+# TEST-FILE-DEP    waits on both a job completion and a file being created
+#                  dependency. When it runs it will delete the test file it was
+# 				 waiting for so the test can be rerun without intervention.
+# 				 used /bin/rm to delete the testfile
+# TEST-JOB-DEP     waits on two job dependencies, TEST-FAIL-AND-RESTART and
+#                  the TEST-FILE-DEP jobs. Just does an 'ls' command.
+# TEST-CREATE-TEST-FILE creates the test file for TEST-FILE-DEP. This is
+#                  scheduled to run at a time after TEST-FILE-DEP so the
+# 				 TEST-FILE-DEP job does wait on the file.
+# 				 runs /bin/touch, parm is the testfile name.
+# TEST-FAIL-AND-RESTART checks for the existence of a /tmp file. If  the file
+#                  does not exist the file is created and this job goes into fail
+# 				 state (exit 1). MUST BE MANUALLY RESTARTED. When restarted it 
+# 				 will find the file, delete the file before the next test run
+# 				 and complete ok.
+# 				 This tests the alert creation and job (alert restart)
+# 				 functions.
+# 				 file test_failure.sh
+# TEST-RUN4-60MINS runs for 60 minutes. Tests the scheduling of jobs around a
+#                  running one and that the cleanup code gets the correct jobs.
+# 				 Also allows newday alert/depwait handling to be tested.
+# 				 Generally just a long running job I can test around.
+# 				 file test_run_for_60_minutes.sh
+# TEST-REPEAT      Test a regularly repeating job, runs every 15 minutes.
+#                  just issues an 'ls'.
+# MANY-JOB-1 to 5  Test multiple jobs running, so the maximum number of running
+#                  jobs running handling (job requeues etc) can be tested.
+# 				 file test_run_for_5_minutes.sh
+# 
+# These two usefull jobs I extracted from the jobs I run, as you probably want to
+# customise and use them also.
+# NULL-ARCHIVE-JOBLOGS As well as testing the run on specific day(s) function and
+#                 the NULL job special handling, it is a usefull job you should
+#                 probably run. It achives the job log files every sunday. You
+#                 should do this to prevent them eternally growing.
+#                 file weekly_log_archive.sh
+#                 Will purge any archived logs over 15 days old.
+# DAILY-SCHED-SNAPSHOT Take a backup of the scheduler configuration and all jobs
+#                 in the job definition database in a form that can be reloaded
+#                 by the jobsched_cmd program.
+#                 file daily_server_snapshot.sh
+#
+# ************************************************************************************************
+# Needed for authorisation to define jobs
+AUTOLOGON
+#
+# Job TEST-FILE-DEP, Test file and job triggers
+JOB ADD TEST-FILE-DEP,OWNER <yourowner>,TIME <date> 19:30,CMD /bin/rm,PARM "-f /tmp/jobsched_test_trigger",DESC Test file and job triggers,DEP "JOB TEST-RUN4-60MINS,FILE /tmp/jobsched_test_trigger"
+#
+# Job TEST-JOB-DEP, test
+JOB ADD TEST-JOB-DEP,OWNER <yourowner>,TIME <date> 19:35,CMD ls,DESC test,DEP "JOB TEST-FILE-DEP,JOB TEST-FAIL-AND-RESTART"
+#
+# Job TEST-CREATE-TEST-FILE, Create file to trigger test-file-dep
+JOB ADD TEST-CREATE-TEST-FILE,OWNER <yourowner>,TIME <date> 19:55,CMD /bin/touch,DESC Create file to trigger test-file-dep,PARM "/tmp/jobsched_test_trigger"
+#
+# Job TEST-FAIL-AND-RESTART, This is a job to test failures and alert
+JOB ADD TEST-FAIL-AND-RESTART,OWNER <yourowner>,TIME <date> 19:35,CMD <yourjobdir>/test_failure.sh,DESC This is a job to test failures and alert
+#
+# Job TEST-RUN4-60MINS, This is a test job to run for 60 minutes
+JOB ADD TEST-RUN4-60MINS,OWNER <yourowner>,TIME <date> 19:17,CMD <yourjobdir>/test_run_for_60_minutes.sh,DESC This is a test job to run for 60 minutes
+#
+# Job TEST-REPEAT, No description entered
+JOB ADD TEST-REPEAT,OWNER <yourowner>,TIME <date> 12:02,CMD ls,DESC No description entered,REPEATEVERY 15
+#
+# Job MANY-JOB1 through 5, Test multiple job runs
+JOB ADD MANY-JOB1,OWNER <yourowner>,TIME <date> 19:15,CMD <yourjobdir>/test_run_for_5_minutes.sh,DESC Test multiple job runs job 1
+JOB ADD MANY-JOB2,OWNER <yourowner>,TIME <date> 19:16,CMD <yourjobdir>/test_run_for_5_minutes.sh,DESC Test multiple job runs job 2
+JOB ADD MANY-JOB3,OWNER <yourowner>,TIME <date> 19:17,CMD <yourjobdir>/test_run_for_5_minutes.sh,DESC Test multiple job runs job 3
+JOB ADD MANY-JOB4,OWNER <yourowner>,TIME <date> 19:17,CMD <yourjobdir>/test_run_for_5_minutes.sh,DESC Test multiple job runs job 4
+JOB ADD MANY-JOB5,OWNER <yourowner>,TIME <date> 19:17,CMD <yourjobdir>/test_run_for_5_minutes.sh,DESC Test multiple job runs job 5
+#
+# Job NULL-ARCHIVE-JOBLOGS, Archive previous log files
+JOB ADD NULL-ARCHIVE-JOBLOGS,OWNER root,TIME 20020414 23:30,CMD <yourjobdir>/weekly_log_archive.sh,DESC Archive previous log files,DAYS "SUN"
+#
+# Job DAILY-SCHED-SNAPSHOT, Save current job databse + server config
+JOB ADD DAILY-SCHED-SNAPSHOT,OWNER <yourowner>,TIME <date> 17:30,CMD <yourjobdir>/daily_server_snapshot.sh,DESC Save current job databse + server config,PARM "~~DATE~~"
+#
+# Job TEST-DATE-OVERRIDE, Test date overrides
+JOB ADD TEST-DATE-OVERRIDE,OWNER <yourowner>,TIME <date> 14:00,CMD <yourjobdir>/test_rundate.sh,DESC Test date overrides,PARM "~~DATE~~ TESTPARM2"
+#
+# --------------------- Submit the jobs onto the queue ------------------
+# Normally done by the scheduler newday task, which won't have run yet for
+# these as these are new.
+JOB SUBMIT TEST-FILE-DEP
+JOB SUBMIT TEST-JOB-DEP
+JOB SUBMIT TEST-CREATE-TEST-FILE
+JOB SUBMIT TEST-FAIL-AND-RESTART
+JOB SUBMIT TEST-RUN4-60MINS
+JOB SUBMIT TEST-REPEAT
+JOB SUBMIT MANY-JOB1
+JOB SUBMIT MANY-JOB2
+JOB SUBMIT MANY-JOB3
+JOB SUBMIT MANY-JOB4
+JOB SUBMIT MANY-JOB5
+JOB SUBMIT NULL-ARCHIVE-JOBLOGS
+JOB SUBMIT DAILY-SCHED-SNAPSHOT
+JOB SUBMIT TEST-DATE-OVERRIDE
+# ************************************************************************************************

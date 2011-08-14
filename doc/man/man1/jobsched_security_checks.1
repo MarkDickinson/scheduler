@@ -1,0 +1,78 @@
+.ig \"-*- jobsched_cmd -*-
+Copyright (C) 2001 Mark Dickinson
+Marks Job Scheduler is distibuted under the terms of the GNU GPL.
+..
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+.\" Like TP, but if specified indent is more than half
+.\" the current line-length - indent, use the default indent.
+.de Tp
+.ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
+.el .TP "\\$1"
+..
+.TH jobsched_security_checks 1 "August-14-2011" "Marks Job Scheduler v1.13"
+.SH PROGRAM NAME
+.B jobsched_security_checks
+\- Job Scheduler Security Audit Report (should run daily)
+.SH INTRODUCTION
+jobsched_security_checks is a utility designed to perform all reasonable security
+checks against the job scheduler databases and the actual jobs run by the scheduler.
+If there is anything I would consider a security risk it is reported on if found.
+Details of what is reported on are documented below.
+
+.SH INVOCATION
+The format for invoking jobsched_security_checks is: jobsched_security_checks /path/to/install/database/dir \fR
+
+.SH RETURN CODES
+.TP
+The program will exit 0 if no problems are found, and exit 1 if problems were found. This allows a script to run it daily and by checking the exit code only email the administrators if a problem is found.
+.SH WHAT IS CHECKED
+.TP
+User inactivity - If a user has not logged into the scheduler in the last 60 days it will be reported
+.TP
+Job file security - If the job is run by the scheduler user X the program checks that the file to be run is actually owned by user X and that it is not writeable by any other user
+
+.SH EXAMPLE OUTPUT
+[mark@falcon scheduler]$ bin/security_checks ./
+
+Job record SYS-DAILY-MYSQL-BACKUP
+  Command /opt/dickinson/scheduler/jobs/sys/daily_mysql_backup.sh
+  Job runs under userid root
+    *** Job command file is not owned by root, owned by mark
+  note: file last modified Thu Sep  4 21:16:38 2008
+
+Job record SYS-BKP-MASTER
+  Command /opt/dickinson/backuputil/backup.sh
+  Job runs under userid root
+    *** Job command file is not owned by root, owned by mark
+  *** Command file secured badly, non-owner users can change the file
+  note: file last modified Sat Sep 19 11:36:35 2009
+
+Suspect USER records found in ./user_records.dbs
+  *** User security has not logged in in 60 days, last login was 20071218 11:02:00
+      security details : Security Admin User
+  *** User apache has not logged in in 60 days, last login was NEVER
+      apache details : Web Operator id
+
+.SH AUTHOR
+Mark Dickinson http://www.mdickinson.dnsalias.org/site_support/contact_mark.php
+.SH BUGS
+Report bugs to the address above.
+Give a detailed description of the problem and report the version of Marks Job Scheduler that you are using.
+.SH COPYRIGHT
+Copyright \(co 2001 Mark Dickinson
+.LP
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program (gpl-2.0.txt); if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA., or refer to the online version at http://www.gnu.org/licenses/gpl-2.0.html
+.LP
+.SH AVAILABILITY
+It is intended that the latest stable source version will always be available on github at xxxxx-insert-here-xxxxx, prebuilt static binary packages built on Fedroa 15 or above are available at http://mdickinson.dnsalias.org/linux/doc/Job_Scheduler_about.php
+.LP
+.SH SEE ALSO
+jobsched_daemon (1), jobsched_take_snapshot (1), jobsched_utilities (1), jobsched_jobutil (1), jobsched_security_checks (1)

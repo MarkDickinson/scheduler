@@ -1,0 +1,53 @@
+This has only been used by me under Tomcat 5.
+It was only written as a self teaching exercise.
+Use at your own risk.
+
+The steps to implement this are simply
+  (1) customise one configuration file
+  (2) install it into your J2EE webserver (as noted, only tested
+      under tomcat and instructions here are for tomcat)
+
+(1) update your server list
+       vi file object_classes/object_SCHEDPoolWrapper.jsp
+    you want to update the section in the file below to adjust
+    the number of hosts you monitor, the hostnames and portnumbers
+    each host has the scheduler running on.
+      // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      // Change the below for your site
+      // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      int countOfHosts = 3;
+      String arrayOfHosts[] = { "falcon", "amber", "nic" };
+      int arrayOfPorts[] =    { 9002, 9002, 9002 };
+      int socketsPerHost = 5;
+      // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+      // Change the above for your site
+      // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    The socketsPerHost value is the number of permanent connections the
+    JSP interface will keep open to each server at al times; tune
+    carefully (should be about 5-10% of users expected to use the 
+    interface [unless they are all autorefreshing of couse] but probably
+    never below 2).
+    A socket is logged in for each user doing real work, but will log
+    them out if they are inactive for too long so it is available for
+    another user.
+    Also during high load 'session stealing' can manage the load,
+    basically if all sessions are logged on and N+1 users makes a
+    request the oldest used session is automatically logged off and
+    the N+1 user is logged into the session instead.
+    So the trick is to only bump the socketsPerHost is session stealing
+    occurs too often. The tomcat catalina.out log will have application
+    written messages when session stealing is occuring so can be
+    monitored that way.
+
+(2) Just copy the entire directory to your tomcat 'webapps' directory.
+    Normally /usr/local/tomcat/webapps or /opt/tomcat/webapps but a
+    quick 'find / -type d -name webapps' will find it. Then
+       mkdir /whereveryoufoundit/webapps/scheduler
+       cp -rp * /whereveryoufoundit/webapps/scheduler
+    adjust selinux contexts with chcon if needed
+    restart tomcat
+    login with your JOB SCHEDULER USERID (which should be setup on all
+    the servers you are using with the same useris and password) at 
+       http://hostname:8080/scheduler/index.html
+

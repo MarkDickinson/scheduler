@@ -1,0 +1,60 @@
+.ig \"-*- jobsched_daemon -*-
+Copyright (C) 2001 Mark Dickinson
+Marks Job Scheduler is distibuted under the terms of the GNU GPL.
+..
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+.\" Like TP, but if specified indent is more than half
+.\" the current line-length - indent, use the default indent.
+.de Tp
+.ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
+.el .TP "\\$1"
+..
+.TH jobsched_daemon 1 "August-14-2011" "Marks Job Scheduler v1.13"
+.SH PROGRAM NAME
+.B jobsched_daemon
+\- The scheduler application for Marks Job Scheduler.
+.SH INTRODUCTION
+jobsched_daemon is the scheduler server task for Marks Job Scheduler.
+
+It is responsible not just for all scheduling and depndency management plus job failure and restart functions but is also the single point of access for all database maintenance; any and all database updates must be requested via API calls to the jobsched_daemon process.
+
+This task should be started by your servers startup scripts in /etc/init.d as it should run as root; it should only be manually started for testing.
+
+.SH INVOCATION
+The format for invoking jobsched_daemon
+       is:   jobsched_daemon\fR
+       or:   jobsched_daemon [portnum] \fR
+       or:   jobsched_daemon portnum [ipaddr]\fR
+.TP
+Note that if ipaddr is used portnum is required \fR
+.TP
+portnum is the port number the scheduler server will listen on, the default is 9002
+.TP
+ipaddr is the ip-address of the interface the scheduler server will listen on, the default (or if 127.0.0.1 is used) is assumed to be a request to listen on all interfaces
+
+.SH ADDITIONAL INFORMATION
+Refer to the manuals provided with the application for jobsched_damon configuration options and security considerations
+
+.SH AUTHOR
+Mark Dickinson http://www.mdickinson.dnsalias.org/site_support/contact_mark.php
+.SH BUGS
+Report bugs to the address above.
+Give a detailed description of the problem and report the version of Marks Job Scheduler that you are using.
+.SH COPYRIGHT
+Copyright \(co 2001 Mark Dickinson
+.LP
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program (gpl-2.0.txt); if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA., or refer to the online version at http://www.gnu.org/licenses/gpl-2.0.html
+.LP
+.SH AVAILABILITY
+It is intended that the latest stable source version will always be available on github at xxxxx-insert-here-xxxxx, prebuilt static binary packages built on Fedroa 15 or above are available at http://mdickinson.dnsalias.org/linux/doc/Job_Scheduler_about.php
+.LP
+.SH SEE ALSO
+jobsched_cmd (1), jobsched_take_snapshot (1), jobsched_utilities (1), jobsched_jobutil (1), jobsched_security_checks (1)

@@ -1,0 +1,59 @@
+.ig \"-*- jobsched_cmd -*-
+Copyright (C) 2001 Mark Dickinson
+Marks Job Scheduler is distibuted under the terms of the GNU GPL.
+..
+.de TQ
+.br
+.ns
+.TP \\$1
+..
+.\" Like TP, but if specified indent is more than half
+.\" the current line-length - indent, use the default indent.
+.de Tp
+.ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
+.el .TP "\\$1"
+..
+.TH jobsched_jobutil 1 "August-14-2011" "Marks Job Scheduler v1.13"
+.SH PROGRAM NAME
+.B jobsched_jobutil
+\- Job database utility (a work in progress)
+.SH INTRODUCTION
+jobsched_jobutil currently provides only display requests against the job database file. It is intended that in the future it will also provide the ability to sort the database (simply to make it easier to find jobs using the user interface) but that has not yet been implemented.
+
+.SH INVOCATION
+The format for invoking jobsched_jobutils is: jobsched_jobutil -d /path/to/install/database/dir -c command\fR
+
+.SH PROGRAM OPTIONS
+.TP
+-d  specifies the path to the directory the job scheduler was installed in; where the job database is
+.TP
+-c  specifies the command operation the program is to perform as discussed below
+.SH COMMAND PARAMETER OPTIONS
+.TP
+execreport - shows jobs in the database sorted by their next execution time order, excluding any deleted jobs
+.TP
+namereport - shows jobs in the database sorted by job name order, exluding any deleted jobs
+.TP
+deletelist - shows jobs flagged as deleted that have not yet been deleted from the database. This would normally be an empty display as deleted jobs are 'compressed' out of the database with every newday run
+.TP
+sortdbs - not implemented
+
+.SH AUTHOR
+Mark Dickinson http://www.mdickinson.dnsalias.org/site_support/contact_mark.php
+.SH BUGS
+Report bugs to the address above.
+Give a detailed description of the problem and report the version of Marks Job Scheduler that you are using.
+.SH COPYRIGHT
+Copyright \(co 2001 Mark Dickinson
+.LP
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program (gpl-2.0.txt); if not, write to the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA., or refer to the online version at http://www.gnu.org/licenses/gpl-2.0.html
+.LP
+.SH AVAILABILITY
+It is intended that the latest stable source version will always be available on github at xxxxx-insert-here-xxxxx, prebuilt static binary packages built on Fedroa 15 or above are available at http://mdickinson.dnsalias.org/linux/doc/Job_Scheduler_about.php
+.LP
+.SH SEE ALSO
+jobsched_daemon (1), jobsched_take_snapshot (1), jobsched_utilities (1), jobsched_jobutil (1), jobsched_security_checks (1)

@@ -1,0 +1,22 @@
+The samples folder directories contain
+  directory     contains
+  ---------     --------
+  initd         a sample start/stop script to go into /etc/init.d,
+                customise it, chkconfig --add xx, chkconfig xx on
+                (replace xx with what you call the script of course)
+  jobs          sample job scripts and a command file to load them
+                that show how the scheduler works if you want to try
+                them. The command file to load them will need to be
+                customised to point to where you installed the samples
+                and to a userid on your system
+  alert_samples one config file mentioned in the main installing
+                instructions file that is copied to the directory
+                you install the application into; plus two sample
+                scripts showing how to forward requests to raise/cancel 
+                alerts to external monitoring tools
+  usefull       some programs and a script library I use in my jobs
+                that may be usefull
+                  - daysago: how many days in the past was a date
+                  - filesize: what size is a file (I use it to
+                    avoid emailing empty error logs)
+                  - workoutdate: does various date manipulations

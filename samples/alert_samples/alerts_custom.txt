@@ -1,0 +1,24 @@
+# alerts_custom.txt, comments at the end
+#
+# callout list
+150 3 CALLOUT SYSTEM ADMINISTATOR
+151 3 CALLOUT SQL DBA GROUP
+152 3 CALLOUT DEVELOPMENT SUPPORT
+#
+# operator actions
+160 1 LEAVE FOR DAYSHIFT
+161 1 SCHED DELETE JOB
+162 2 OPERATOR TO CORRECT AND RESTART
+163 2 IGNORE, AUTOMATION HANDLING THIS
+#
+# --- alerts_custom.txt ---
+# This file contains a set of user customisable messages for any job
+# alerts. The user range is limited to 150-199.
+# If any user job exists a program or script with an exit code in the
+# 150-199 range this file will be searched for the appropriate error
+# text value to place in the alert.
+# Syntax: nnn S message-text
+#   nnn must be three disgits followed by a space
+#   S is severity, 1=manual action needed, 2=rerun needed, 3=page support
+#   message-text limited to 40 bytes
+# ------------------------ end of file ---------------------------

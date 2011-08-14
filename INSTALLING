@@ -1,0 +1,141 @@
+THIS INSTALLATION METHOD HAS BEEN TESTED ON A FEDORA CORE 15 SERVER.
+YOUR MILAGE ON OTHER DISTRIBUTIONS MAY VARY.
+
+NOTE: VERY GCC VERSION DEPENDANT, compiled and worked no probs on GCC3 up
+      to FC3, compiled cleanly but did not work from FC4-FC13 on GCC4,
+      compiles cleanly and works again from FC14 onward with GCC4. Wierd.
+
+This document includes the following sections in the order below
+
+  -- Documentation, where is it
+  -- IMPORATANT UPGRADE NOTES (NOT REQUIRED FOR NEW INSTALLS)
+  -- Security Recomendations
+  -- Installation Quick Start For the Impatient
+      - installing and starting
+         ...the easy BETA way
+         ...the recomended manual way
+      - immediate online customisation needed
+  -- Optional installation of web interfaces
+
+Documentation, where is it
+==========================
+Full manuals available as .ODT document files under doc/PDF
+You should read these if you actually want to do anything with 
+the scheduler (saved as the origional source .odt files).
+The man pages are under doc/man/man1 and you should copy them
+to /usr/local/share/man/man1 if you wish to use them, they are not
+installed by the lazy_install_script
+
+IMPORATANT UPGRADE NOTES (NOT REQUIRED FOR NEW INSTALLS)
+========================
+Because the database format may change between versions,
+If you are upgrading from a previous release ensure you...
+  PRE-UPGRADE
+  * Shutdown your existing version
+  * Use the jobsched_take_snapshot program to backup your existing
+    configuration before starting.
+  POST-UPGRADE
+  * Delete the old *.dbs and config.dat files
+  * Use jobsched_cmd < [your snapshot file] to reload the job,
+    calendar and user definitions backed up by the
+    jobsched_take_snapshot above (will recreate the files deleted).
+
+Security Recomendations
+=======================
+Read the security manual (PDF in doc/PDF directory). By default the
+application is pretty wide open to ip-traffic and has configurations
+that can allow valid users to exploit. The default configuration is
+for an internal network with minimal security requirements.
+
+Installation Quick Start For the Impatient
+==========================================
+First get the source from git or my website
+
+Installing and starting
+-----------------------
+The easy way.
+.............
+I have created a script lazy_install.sh in the
+application directory that can be used to create the directory
+structure required, compile the programs, customise and install the
+init.d script; and goodness, even create an uninstall script.
+If you want to do it that way just run ./lazy_install.sh
+but you will have no idea of what is going on.
+
+The manual way
+..............
+It is preferable you know what you are doing
+
+As root
+
+cd /wherever/you/put/the/application/source
+# make required directories
+mkdir -p /opt/dickinson/scheduler
+mkdir /opt/dickinson/scheduler/bin
+mkdir /opt/dickinson/scheduler/etc
+mkdir /opt/dickinson/scheduler/logs
+mkdir /opt/dickinson/scheduler/joblogs
+# initialise some control files
+cat << EOF > /opt/dickinson/scheduler/etc/shell_vars
+SCHED_BASE_DIR=/opt/dickinson/scheduler
+SCHED_BIN_DIR=/opt/dickinson/scheduler/bin
+SCHED_JOBLOG_DIR=/opt/dickinson/scheduler/joblogs
+EOF
+cp samples/alert_smaples/alerts_custom.txt /opt/dickinson/scheduler
+# compile the programs; AND delete the temorary object files
+# created so git doesn't want to add them
+cd src
+./compile_all_linux /opt/dickinson/scheduler
+find ./ -type f -name "*.o" -exec /bin/rm {} \;
+cd ..
+# Change the below 'mark' to a non-root user on your system
+chown -R mark:mark /opt/dickinson/scheduler
+
+# MANUAL STEP
+vi samples/initd/server.rc3_d  and customise the below three values
+   prod_port_num='9002'    # port number application will use
+   local_host="127.0.0.1"  #(refer to manual, and security notes above)
+   installed_dir='/opt/dickinson/scheduler'
+cp samples/initd/server.rc3.d /etc/init.d/marks_job_scheduler
+chmod 755 /etc/init.d/marks_job_scheduler
+chkconfig --add marks_job_scheduler
+chkconfig marks_job_scheduler on
+
+
+immediate online customisation needed
+-------------------------------------
+You should immediately add youself as an admin user so you no longer
+need to use root to manage the scheduler
+
+# start the jobsched_cmd program, AS THE root USER THIS TIME
+#   example using the default port and localhost ipaddr
+#   /opt/dickinson/scheduler/bin/jobsched_cmd
+#   example using the default port and interface ipaddr
+#   /opt/dickinson/scheduler/bin/jobsched_cmd 9002 169.168.1.189
+#   example using a different port and localhost ipaddr
+#   /opt/dickinson/scheduler/bin/jobsched_cmd 9010
+#   basically if you change ipaddr you must provide the port
+/opt/dickinson/scheduler/bin/jobsched_cmd
+
+At the 'command:' prompt
+(use your own unix userid and any password, not your unix one)
+enter the below
+
+  autologin
+  user add mark,password abcdefgh,auth admin,autoauth yes,subsetauth admin,desc "Mark Dickinson"
+  login mark abcdefgh
+
+If the login as OK your new id can be used for admin functions instead
+of needing be be logged in as root.
+Also the autoauth yes flag means if you are logged on as yourself at
+the unix level when you run jobsched_cmd you can use autologin instead
+of login so don't need to remember your password (but you must be
+logged in as yourself at the unix level for that to work)
+
+While you are logged in you may as well also
+  sched newdaytime hh:mm          (set to your newday start time)
+  sched newdaypauseaction depwait (or alert, refer to the manual)
+
+And may want to investigate the online 'help command'
+To exit either enter the command 'exit', or make any typing mistake :-)
+

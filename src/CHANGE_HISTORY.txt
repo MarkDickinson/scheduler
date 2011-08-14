@@ -1,0 +1,209 @@
+Change History since first public release
+=========================================
+
+This is a history of changes between the various releases,
+it can be used as a guide to whether you wish to upgrade
+to the latest release. You should only upgrade if you need
+any of the new features.
+
+-------------- START OF CHANGE HISTORY LOG ---------------
+
+Change Type Key: (S) Security change
+                 (I) Internal function change
+                 (U) User requested change
+                 (*) Bug fix for Major impact problem
+                 (+) Bug fix for minor impact problem
+                 (N) New program included
+
+
+Fixes Since V1.13
+-----------------
+Version V1.13 is this release.
+2011/04/05 - (I) Updated text shown to user when starting jobsched_cmd to show
+                 GPL V2 release instead of just GPL release.
+
+Fixes Since V1.12
+-----------------
+2011/03/21 - (I) Fixed a few message numbers to make them unique; they were
+                 identified as duplicates while I was converting the html
+                 manuals to PDF (ok .ODT) format so I can retire the out-of-date
+                 html documentation. Included in the distro gpl-2.0.txt license.
+
+Fixes Since V1.11
+-----------------
+2011/03/13 - (*) Finally completed conversion to allow it to be compiled under
+                 GCC 4.5.1 or above. No function changes, just a lot of code
+                 block replacements (with defines so it can still compile under 
+                 GCC 3.n if needed) to replace the sections that used system calls
+                 that compiled cleanly under GCC 4.n but were passing garbage or
+                 segfaulting if compiled under the later versions of the compiler.
+
+Fixes Since V1.10
+-----------------
+2009/02/01 - (+) Bug fix for jobsched_take_snapshot, the calendar dump had
+                 the days offset down by one, forgot to allow for array
+                 starting at zero. Running out of things to fix, so finally
+                 fixed this one.
+
+Fixes Since V1.09
+-----------------
+2007/01/26 - (*) Bug fix for 'dep clearall dep' causing server to crash
+                 that was introduced into a new version build between 1.09
+                 and 1.10 releases.
+2007/01/26 - (+) Changed server startup config display to use the same 
+                 version banner as all the other modules
+                 (from server_globals.h instead of hard coded in module)
+
+
+Fixes Since V1.08
+-----------------
+2005/07/12 - (+) Bug fix to calendar scheduling functions. Updates to a
+                 (proc global no less) variable made inside a loop were
+                 lost on exit from the for loop. Used a staging variable
+                 of 'z' and eveything worked when copying values into/from
+                 that (gcc compiler bug ?). Minimal impact, in a seldom used
+                 function (no user reports of encountering it).
+2005/07/12 - (+) WORKAROUND implemented for problem of database compressions
+                 only ocurring at loglevel info; change to info at startup
+                 and newday then revert back to user selected level when done.
+2006/01/01 - (I) Tidied dir structure, job logs moved to joblogs dir, server
+                 logs moved to logs dir, and binaries moved to bin. Just keeps
+                 the app directories less cluttered (changes to server.c,
+                 server_global_data.c and schedlib.c, package script, install
+                 script and rc3.d script).
+
+
+Fixes Since V1.07
+-----------------
+2004/01/18 - (S) Implemented logoff function in the server, and placed into
+                 jobsched_cmd also to allow testing. This is for connection
+                 pooling I am working on in the servlet interface so when an
+                 idle connection can be reused I can flush the current
+                 authority from the server connection table when I release the
+                 servlet pool entry (so I son't have to close/open socket to do
+                 so).
+2004/02/10 - (I) Changed the format of the login OK message to a comman format
+                 for all logins; so the JSP interface can parse it easily.
+2004/02/29 - (N) Included my ksh/bash script date library toolkit with the app.
+2004/06/17 - (I) Changed the prefix search option in sched and job listall to
+                 use a true wildcard mask (* character) for searches. Updated
+                 documentation with the change.
+2004/06/19 - (N) Created the jobutil program. Not yet full function. What it
+                 does do already is in the manuals. 
+
+
+Fixes Since V1.06
+-----------------
+2003/09/22 - (I) Implemented a common memory management module for use by
+                 all scheduler modules, allows display of memory chains
+                 in use and provides better memory tracking during change
+                 testing.
+
+
+Fixes Since V1.05
+-----------------
+2003/09/12 - (I) Implemented unique message numbers for all messages
+                 and wrote the html messages manual.
+2003/09/20 - (*) Fixed bug where a repeatinterval of 10 always somehow
+                 became translated to 0 (was 10 when written to disk, 0
+                 when read back). This caused an endless loop incrementing
+                 by 0 to the next runtime. [1-9 and 11-infinity worked
+                 fine, it was only the value 10 that had this problem ???]
+                 No logic error to fix, did the below change to remedy.
+2003/09/20 - (I) Changed the storage of the repeatinterval value to a string
+                 value rather than an integer value and adjusted logic to
+                 handle the value being a string. This was the way it should
+                 have been anyway as I don't want to pass binary values
+                 across the socket interface.
+2003/09/20 - (N) Provided the user inactivity and file security checking
+                 report program with the application.
+
+
+Fixes Since V1.04
+-----------------
+2003/02/22 - (U) Added ability to run an external script each time an alert is
+                 raised or cancelled (for forwarding to other apps ideally).
+                 Added the alert_tools directory to have sample scripts to be
+                 run when an external program is called.
+2003/06/02 - (I) prefix 'cat /dev/null | ' to each bash command run. This is
+                 to handle any scripts that may prompt for input.
+                 Prior to this they would just hang waiting for input.
+                 Note: no batch jobs should prompt !, however I specifically
+                 tested for this, and found the need to have /dev/null piped
+                 to the command.
+2003/06/02 - (I) Changed socket options on startup to SO_REUSEADDR as on
+                 my linux server even though netstat showed nothing on the
+                 port it could take over two hours before a restart of
+                 the scheduler stopped getting port in use errors.
+2003/06/22 - (I) If newday fail action is depwait rather than fail there
+                 was no alert notification when it ran late. Added some
+                 logic to raise an alert if this happens and the batch 
+                 window runs past time. Also added logic to clear the
+                 alert when the newday finally runs. This keeps it
+                 similar to processing when the newday late action
+                 was to fail, as the failure raises alerts.
+
+
+Fixes Since V1.03
+-----------------
+2003/01/05 - (I) Fixed issue with old calendars not being deleted on year
+                 rollover (forgot to add 1900 to current year in compares
+                 there). Committed version change to V1.03.
+2003/01/13 - (I) Added help for the SCHED LICENSE command under sched help
+                 in jobsched_cmd.
+2003/01/22 - (U) Added the OPEN command to jobsched_cmd so user can connect
+                 to a different server without needing to stop/restart the
+                 program.
+
+
+Fixes Since V1.02
+-----------------
+2002/09/20 - (I) added a hostname field in the API header so a process
+                 recieving an API buffer knows what host it came from.
+                 This is prework for the server to send unsolicted updates
+                 to clients where the client may be monitoring multiple
+                 servers.
+2002/10/19 - (+) fixed memory leak in jobsched_cmd job add function.
+2002/10/19 - (I) Added calendar processing into the server and calendar
+                 stubs. Added calendar functionality to jobsched_cmd.
+2002/11/25 - (I) Implemented full calendar functions, and tested. Fixed a
+                 few printf lines that should have been going to the log.
+2002/11/25 - (+) Fix bug in jobsched_cmd where
+                 with multiple adds would pass previous parm to a job
+                 if the new job had no parm. Minimal impact, only really 
+                 seen when a new server is setup and a batch job load
+                 performed.
+2002/11/25 - (S) Fully implemented user role functions.
+
+
+Fixes since V1.01
+-----------------
+2002/08/02 - (S) jobsched_daemon
+                 added code to allow the server to be configured
+                 to bind to a single interface, still defaults
+                 to all interfaces.
+                 Reason: I wanted to run it on my firewall system
+                 but only let it listen internal network port, not
+                 the external one as well.
+2002/08/16 - (I) All code using sprintf was changed to use snprintf
+                 as when I compiled it using cc on sun solaris the
+                 sprintf function just did not work, and returned
+                 large negitive numbers for the string lengths. The
+                 snprintf on solaris returned the correct value so
+                 I changed all sprintf to snprintf.
+2002/08/19 - (I) Added system_type.h file so compiles for SOLARIS
+                 can be controlled by a define check in the code.
+                 Added code changes needed to allow for solaris
+                 not having the INADDR_NONE defined and needing the
+                 environ data to be explicitly declared as extern.
+                 Still having trouble with va_start in solaris though.
+2002/09/01 - (I) Added a catchup override flag at the job definition
+                 level so jobs can be excluded from catchup processing.
+                 ie: so my daily backup doesn't run 5 times while
+                 catchup processing is being done.
+2002/09/15 - (U) Added support for alerts_customised.txt file so users
+                 can customise alert messages.
+2002/09/15 - (I) Added last logged on and password last changed to
+                 user info reply buffer.
+
+-------------- END OF CHANGE HISTORY LOG ---------------

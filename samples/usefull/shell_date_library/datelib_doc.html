@@ -1,0 +1,439 @@
+<HTML><HEAD><TITLE>Script Date Library Routines</TITLE></HEAD>
+<BODY>
+<H1>Disclaimer</H1>
+<p>
+This library is provided as is, without any warantee to suitability or accuracy
+for any specific purpose. You use this library at your own risk. You modify
+this library at your own risk.<br>
+There is no support provided for this library.<br>
+You have the code to review, use and change. You decide on the suitability
+of this code for your environment.
+</p>
+
+<H1>Overview</H1>
+<p>
+This library provides a way for shell scripts to maniplulate dates. It does so
+by basing every date on the number of minutes since Jan 1 BASEYEAR, where 
+BASEYEAR is a value defined in the script library; currently 2003.<br>
+The results of each function call are stored in the shell variable
+<b>global_result_value</b>, you have to extract the results from that yourself.
+</p>
+<p>
+You are encouraged to add your own enhancements as required. To facilitate
+this the file <a href="#DTEST">datelib_test</a> has been provided to run tests against the library
+functions. This should identify very quickly if any of your changes have
+broken the library.
+</p>
+<p>
+To use the library in your own scripts, at the start of your scripts include<br>
+<b>. PATH/datelib_ksh</b><br>
+replacing PATH with where you put the file of course. For example
+<pre>
+#!/bin/bash
+year_to_check="$1"
+. ./datelib_ksh
+is_leap_year ${year_to_check} 
+if [ "${global_result_value}." = "1." ];
+then
+   echo " ${year_to_check} is a leap year"
+else
+   echo " ${year_to_check} is not a leap year"
+fi
+exit 0
+</pre>
+</p>
+
+<a name="#index"></a>
+<H1>Function reference</H1>
+<H2>Quick reference</H2>
+<pre>
+<b>Date Routines</b>:
+<a href="#D1">datestamp_calculate YYYY [M]M|MMM|MMMM... DD HH:MM</a> - returns minutes since baseyear for datetime
+<a href="#D2">datestamp_time_now</a> - returns minutes since baseyear to now
+<a href="#D3">datestamp_to_date</a> - returns the YYYY MM DD for the DATESTAMP
+<a href="#D4">datestamp_offset_by_n_days [-]nn DATESTAMP</a> - returns the datestamp passed offset by [-]nn days
+<a href="#D5">date_n_days_ago nn</a> - returns YYYY [M]M DD date n days back from current day
+<a href="#D6">date_to_datestamp YYYY MM DD</a> - returns the date as a datestamp
+<a href="#D7">date_offset_by_n_days [-]nn YYYY nn|MMM|MMMM...</a> - returns YYYY [M]M DD of the date passed offset by [-]nn
+<a href="#D8">day_of_week [ YYYY nn|MMM|MMMM... DD ]</a> - returns Monday...Sunday
+<a href="#D9">get_minutes_in_year YYYY</a> - returns the number of minutes in a year (used internally)
+<a href="#D10">how_many_days_ago DATESTAMP</a> - returns the number of days in the past a DATESTAMP is for (0 if in future)
+<a href="#D11">is_leap_year_check YYYY</a> - returns 1 if it is leap year, 0 if not
+<a href="#D12">num_days_in YYYY [M]M|MMMM..</a> - returns the number of days in the year/month
+
+<b>File helpers</b>:
+<a href="#F1">minutes_since_file_modified filename</a> - returns minutes since file was modified
+<a href="#F2">days_since_file_modified filename</a> - returns days since file was modified
+</pre>
+
+<H2>Date Routines</H2>
+<a name="#D1"></a>
+<H3>datestamp_calculate</H3>
+<b>Function</b>: create a library timestamp value for the date and time passed.<br>
+<b>Syntax</b>: datestamp_calculate YYYY [M]M|MMM|MMMM... DD HH:MM<br>
+<b>Result</b>: the variable global_result_value will contain the calculated library timestamp<br>
+<b>Notes</b>: to create a datestamp without providing a time see <a href="#D6">date_to_datestamp</a>.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   datestamp_calculate 2004 01 28 10:50
+   echo "Result is ${global_result_value}"
+</pre>
+
+<a name="#D2"></a>
+<H3>datestamp_time_now</H3>
+<b>Function</b>: create a library timestamp value for the current time.<br>
+<b>Syntax</b>: datestamp_time_now<br>
+<b>Result</b>: the variable global_result_value will contain the calculated library timestamp<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   datestamp_time_now
+   echo "Result is ${global_result_value}"
+</pre>
+
+<a name="#D3"></a>
+<H3>datestamp_to_date</H3>
+<b>Function</b>: provide the year, month and day of a library timestamp.<br>
+<b>Syntax</b>: datestamp_to_date DATESTAMP<br>
+<b>Result</b>: the variable global_result_value will contain YYYY MM DD of the datestamp<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   datestamp_calculate 2004 01 28 10:50
+   datestamp_value="${global_result_value}"
+   echo "Datestamp ${datestamp_value}"
+   # get the YYYY MM DD for a datestamp
+   datestamp_to_date ${datestamp_value}
+   echo "The YYYY MM DD for ${datestamp_value} is ${global_result_value}"
+</pre>
+
+<a name="#D4"></a>
+<H3>datestamp_offset_by_n_days</H3>
+<b>Function</b>: adjust the timestamp passed +/- the number of days requested.<br>
+<b>Syntax</b>: datestamp_offset_by_n_days [-]nn DATESTAMP<br>
+<b>Result</b>: the variable global_result_value will contain the calculated library timestamp<br>
+<b>Notes</b>: to adjust a date rather than a timestamp see <a href="#D7">date_offset_by_n_days</a>
+or <a href="#D5">date_n_days_ago</a>.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   datestamp_calculate 2004 01 28 10:50
+   datestamp_offset_by_n_days -3 ${global_result_value}
+   # global_result_value now contains datestamp for 25 Jan 2004
+   datestamp_offset_by_n_days 4 ${global_result_value}
+   # global_result_value now contains datestamp for 29 Jan 2004
+</pre>
+
+<a name="#D5"></a>
+<H3>date_n_days_ago</H3>
+<b>Function</b>: returns the YYYY MM DD of the date nn days ago. Only returns days in the past, providing
+a negative number will always result in 0 as a global_result_value.<br>
+<b>Syntax</b>: date_n_days_ago nn<br>
+<b>Result</b>: the variable global_result_value will contain the YYYY MM DD for the date nn days ago<br>
+<b>Notes</b>: also refer to <a href="#D7">date_offset_by_n_days</a>.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   date_n_days_ago 4
+   echo "The date four days ago was ${global_result_value}"
+</pre>
+
+<a name="#D6"></a>
+<H3>date_to_datestamp</H3>
+<b>Function</b>: returns the library timestamp for a date.<br>
+<b>Syntax</b>: date_to_datestamp YYYY MM DD<br>
+<b>Result</b>: the variable global_result_value will contain the calculated library timestamp for the date passed.<br>
+<b>Notes</b>: if minutes are important to you also see <a href="#D1">datestamp_calculate</a>.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   date_to_datestamp 2004 01 28
+   echo "The library timestamp for 2004 01 28 is ${global_result_value}"
+</pre>
+
+<a name="#D7"></a>
+<H3>date_offset_by_n_days</H3>
+<b>Function</b>: returns the date for the day +/- nn days from the date provided.<br>
+<b>Syntax</b>: date_offset_by_n_days [-]nn YYYY nn|MMM|MMMM... DD<br>
+<b>Result</b>: the variable global_result_value will contain the YYYY MM DD date for the date offset 
+the requested number of days from the daye provided.<br>
+<b>Notes</b>: to adjust using a datastamp instead of a date see <a href="#D4">datestamp_offset_by_n_days</a>.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   date_offset_by_n_days -3 2004 Jan 28
+   echo "The library date three days before 2004 01 28 was ${global_result_value}"
+   date_offset_by_n_days 3 2004 January 28
+   echo "The library date three days after 2004 01 28 was ${global_result_value}"
+</pre>
+
+<a name="#D8"></a>
+<H3>day_of_week</H3>
+<b>Function</b>: returns the day of the week for the date provided.<br>
+<b>Syntax</b>: day_of_week YYYY nn|MMM|MMMM... DD<br>
+<b>Result</b>: the variable global_result_value will contain a day name from Sunday through Saturday.</br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   day_of_week 2004 01 28
+   echo "28 January 2004 was a ${global_result_value}"
+</pre>
+
+<a name="#D9"></a>
+<H3>get_minutes_in_year</H3>
+<b>Function</b>: returns the number of minutes for the year provided.<br>
+<b>Syntax</b>: get_minutes_in_year YYYY<br>
+<b>Result</b>: the variable global_result_value will contain the number of minutes in the year requested.</br>
+<b>Notes</b>: This is used internally, it is documented here as you will probably need to use
+it if you are to include your own functions in the library.</br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   get_minutes_in_year 2004
+   echo "There are ${global_result_value} minutes in year 2004"
+</pre>
+
+<a name="#D10"></a>
+<H3>how_many_days_ago</H3>
+<b>Function</b>: returns the number of days in the past a library timestamp is for.<br>
+<b>Syntax</b>: how_many_days_ago DATESTAMP<br>
+<b>Result</b>: the variable global_result_value will contain the number of days in the past the datestamp was.</br>
+<b>Notes</b>: If a future date is passed the result will be 0.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   date_to_datestamp 2004 Jan 01
+   how_many_days_ago ${global_result_value}
+   echo "The 1st of January 2004 was ${global_result_value} days ago"
+</pre>
+
+<a name="#D11"></a>
+<H3>is_leap_year_check</H3>
+<b>Function</b>: checks to see if the year passed was a leap year.<br>
+<b>Syntax</b>: is_leap_year_check YYYY<br>
+<b>Result</b>: the variable global_result_value will be 1 if the year was a leap year, 0 if not.</br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   is_leap_year_check 2004
+   if [ "${global_result_value}." = "1." ];
+   then 
+      echo "2004 was a leap year"
+   else
+      echo "2004 was not a leap year"
+   fi
+</pre>
+
+<a name="#D12"></a>
+<H3>num_days_in</H3>
+<b>Function</b>: works out the number of days in the month.<br>
+<b>Syntax</b>: num_days_in YYYY [M]M|MMM|MMMM...<br>
+<b>Result</b>: the variable global_result_value will contain the number of days in the month.</br>
+<b>Notes:</b>: The year must be provided. We need this to determine if it is a leap year.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   num_days_in 2004 02
+   echo "There are ${global_result_value} days in February 2004"
+   num_days_in 2005 February
+   echo "There are ${global_result_value} days in February 2005"
+</pre>
+
+<H2>File helpers</H2>
+<a name="#F1"></a>
+<H3>minutes_since_file_modified</H3>
+<b>Function</b>: works out the number of minutes since the file was last modified.<br>
+<b>Syntax</b>: minutes_since_file_modified filename<br>
+<b>Result</b>: the variable global_result_value will contain the number of minutes since the file 
+was last modified.</br>
+<b>Notes:</b>: uses the 'ls -la' command to obtain the last modified file time. If the file
+was modified in a previous year (no minutes in the ls output, a year instead) the
+minutes offset will be calculated from 00:00 of the day the file was modified.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   minutes_since_file_modified /var/log/test
+   echo "/var/log/test was modified ${global_result_value} minutes ago"
+</pre>
+
+<a name="#F2"></a>
+<H3>days_since_file_modified</H3>
+<b>Function</b>: works out the number of days since the file was last modified.<br>
+<b>Syntax</b>: days_since_file_modified filename<br>
+<b>Result</b>: the variable global_result_value will contain the number of days since the file 
+was last modified.</br>
+<b>Notes:</b>: uses the 'ls -la' command to obtain the last modified file time.<br>
+<b>Example</b>:<br>
+<pre>
+   . ./datelib_ksh
+   days_since_file_modified /var/log/test
+   echo "/var/log/test was modified ${global_result_value} days ago"
+</pre>
+
+<a name="#DTEST"></a>
+<h1>The datelib_test script</h1>
+<p>
+As you are encouraged to enhance this library with your own routines there needs
+to be a simple way of testing that you have not broken any of the shipped library
+functions when you have been making changes.
+</p>
+<p>
+To facilitate this the script <b>datelib_test</b> has been provided to run
+basic sanity checks against the library. This should be run every time
+you change the library to ensure it stll functions correctly.
+</p>
+<b>Syntax</b>: ./datelib_test<br>
+<b>Notes</b> run this from the same directory the datelib_ksh file is in.<br>
+<p>
+Sample output from a test run is below.
+</p>
+<pre>
+Date library checks.
+
+This script will do fairly minimal checks against the date
+library to confirm that all bits hang together properly.
+This needs to be run after you make any changes to the library.
+
+All tests in the script PASS OK when the script is run against
+the supplied library.
+If when you run it you get failed tests, then either fix or
+backout the changes YOU or your sysadmins made to the library.
+
+Leap year checks beginning
+   OK: 2003 - check passed (0)
+   OK: 2004 - check passed (1)
+   OK: 2005 - check passed (0)
+   OK: 2006 - check passed (0)
+   OK: 2007 - check passed (0)
+   OK: 2008 - check passed (1)
+   OK: 2010 - check passed (0)
+   OK: 2012 - check passed (1)
+Passed.
+
+Checking quantative value procedures
+   Days in years...
+   OK: 2004 - check passed (527040 minutes in 2004)
+   OK: 2005 - check passed (525600 minutes in 2005)
+   OK: 2006 - check passed (525600 minutes in 2006)
+   OK: 2007 - check passed (525600 minutes in 2007)
+   OK: 2008 - check passed (527040 minutes in 2008)
+   OK: 2010 - check passed (525600 minutes in 2010)
+   OK: 2012 - check passed (527040 minutes in 2012)
+   Days in months...
+   (numeric months)
+   OK: - check passed, 31 days in 1 2004)
+   OK: - check passed, 29 days in 2 2004)
+   OK: - check passed, 31 days in 3 2004)
+   OK: - check passed, 30 days in 4 2004)
+   OK: - check passed, 31 days in 05 2004)
+   OK: - check passed, 30 days in 06 2004)
+   OK: - check passed, 31 days in 07 2004)
+   OK: - check passed, 31 days in 08 2004)
+   OK: - check passed, 30 days in 09 2004)
+   OK: - check passed, 31 days in 10 2004)
+   OK: - check passed, 30 days in 11 2004)
+   OK: - check passed, 31 days in 12 2004)
+   (short months, mixed case)
+   OK: - check passed, 31 days in jan 2004)
+   OK: - check passed, 29 days in 2 2004)
+   OK: - check passed, 31 days in march 2004)
+   OK: - check passed, 30 days in april 2004)
+   OK: - check passed, 31 days in may 2004)
+   OK: - check passed, 30 days in jun 2004)
+   OK: - check passed, 31 days in jul 2004)
+   OK: - check passed, 31 days in aug 2004)
+   OK: - check passed, 30 days in sep 2004)
+   OK: - check passed, 31 days in oct 2004)
+   OK: - check passed, 30 days in nov 2004)
+   OK: - check passed, 31 days in dec 2004)
+   (long months, mixed case)
+   OK: - check passed, 31 days in january 2004)
+   OK: - check passed, 29 days in 2 2004)
+   OK: - check passed, 31 days in march 2004)
+   OK: - check passed, 30 days in april 2004)
+   OK: - check passed, 31 days in may 2004)
+   OK: - check passed, 30 days in june 2004)
+   OK: - check passed, 31 days in july 2004)
+   OK: - check passed, 31 days in august 2004)
+   OK: - check passed, 30 days in september 2004)
+   OK: - check passed, 31 days in october 2004)
+   OK: - check passed, 30 days in november 2004)
+   OK: - check passed, 31 days in december 2004)
+   (a few leap year checks via procs tested here)
+   OK: - check passed, 29 days in 2 2004)
+   OK: - check passed, 28 days in 2 2005)
+   OK: - check passed, 28 days in 2 2006)
+   OK: - check passed, 28 days in 2 2007)
+   OK: - check passed, 29 days in 2 2008)
+   OK: - check passed, 28 days in 2 2009)
+Passed.
+
+
+Checking datestamp conversions
+   (to and from a datestamp)
+      (conversion to datestamp, then back to a date, even & odd days)
+      2004 01 18 00:01 method 1 = 551521, method 2 = 551521
+   OK - 551521 converts back into 2004 1 18
+      2004 01 19 00:01 method 1 = 552961, method 2 = 552961
+   OK - 552961 converts back into 2004 1 19
+      2004 02 29 00:01 method 1 = 612001, method 2 = 612001
+   OK - 612001 converts back into 2004 2 29
+      2005 02 28 00:01 method 1 = 1137601, method 2 = 1137601
+   OK - 1137601 converts back into 2005 2 28
+      2010 02 28 00:01 method 1 = 3767041, method 2 = 3767041
+   OK - 3767041 converts back into 2010 2 28
+      2010 02 28 23:59 method 1 = 3768479, method 2 = 3767041
+   OK - 3768479 converts back into 2010 2 28
+      2004 02 28 23:59 method 1 = 611999, method 2 = 610561
+   OK - 611999 converts back into 2004 2 28
+Passed.
+
+   (day sliding checks)
+   datestamp_offset_by_n_days tests
+   OK - got 607680 and expected 607680
+   OK - got 609120 and expected 609120
+   OK - got 1134720 and expected 1134720
+   OK - got 613440 and expected 613440
+   OK - got 1140480 and expected 1140480
+   date_offset_by_n_days tests
+   OK - the date three days FORWARD from 2004 2 29 was 2004 3 3
+   OK - the date three days FORWARD from 2004 3 1 was 2004 3 4
+   OK - the date three days BACKWARD from 2004 3 1 was 2004 2 27
+   OK - the date three days FORWARD from 2005 3 1 was 2005 3 4
+   OK - the date three days BACKWARD from 2005 3 1 was 2005 2 26
+   OK - the date three days FORWARD from 2005 1 1 was 2005 1 4
+   OK - the date three days FORWARD from 2008 1 2 was 2008 1 5
+   date_n_days_ago test
+   OK - the date three days ago was  2004 1 30 [MANUALLY CHECK ME]
+Passed.
+
+Day name calculations...
+   OK - Expected Wednesday for 2004 01 28, got Wednesday
+   OK - Expected Thursday for 2004 01 29, got Thursday
+   OK - Expected Friday for 2004 01 30, got Friday
+   OK - Expected Friday for 2004 01 02, got Friday
+   OK - Expected Sunday for 2004 02 15, got Sunday
+   OK - Expected Monday for 2003 11 17, got Monday
+   OK - Expected Tuesday for 2005 02 08, got Tuesday
+Passed.
+
+
+File timestamp date routine checks
+   (testing days in the past, using 2003 01 01)
+-rw-rw-r--    1 mark     mark            0 Jan  1  2003 zzzzz.delme
+   WARNING: Response mismatch, expected 571680, got 572938
+   If checking on a previous years file there is no hh:mm to use so it will be
+   hh:mm minutes out from the expected time.
+   If the file being checked is for a previous year, and the next check passes
+   then there is no problem.
+   OK - got expected result (397)
+   (testing current time)
+-rw-rw-r--    1 mark     mark            0 Feb  2 20:58 zzzzz.delme
+   OK - expected 0, got 0
+   OK - expected 0, got 0
+
+-- End of tests --
+</pre>
+</BODY>
+</HTML>

@@ -1,0 +1,115 @@
+<H1>Help Quick Reference</H1>
+<p>
+In all things remember, these are only sample pages to
+get you up and running. You are expected to customise
+them for your site. If you see this, your admins
+have not got around to customising it yet.
+</p>
+<B>Quick Jump Index</B><BR>
+<UL>
+<li><A HREF=#runnow>How to make a job run NOW</a></li>
+<li><A HREF=#holdon>Holding a job</a></li>
+<li><A HREF=#holdoff>Releasing a job from hold</a></li>
+<li><A HREF=#delete>Deleteing a job</a></li>
+<li><A HREF=#ack>Acknowledging an alert</a></li>
+<li><A HREF=#restart>Restarting a failed job</a></li>
+<li><A HREF=#forceok>Changing a job from failed to completed state</a></li>
+</UL>
+
+<hr>
+<h2>Job Displays</h2>
+<p>
+<b>Advisory note</b>: The display jobs with no repeat jobs displayed
+is probably not going to work on your site. This is specifically
+for my site where all my repeat jobs follow the naming standard
+SYS-Rnnn so can easily be suppressed.<br>
+If your site uses a different naming standard your admins
+will have to customise the sample pages supplied.
+</p>
+
+<hr>
+
+<h2>Job Management</h2>
+
+<hr>
+<a name=#runnow><h3>How to make a job run NOW, Asking a job to run immediately</h3></a>
+<p>From the job status overview screen you can select the <em>[Actions]</em> button to obtain a list
+of possible commands you can issue for a job on the active queue.</p>
+<p>The [runnow] button from this screen will alter the scheduled runtime of the current job to the
+current time, making it immediately available to be scheduled on, <em>assuming the following conditions are met</em>.
+<ul>
+	<li>Job is not in a failed state</li>
+	<li>job is not in a dependency state waiting for other jobs to complete</li>
+	<li>the job is not held</li>
+</ul>
+<p>Note that even if all conditions are met the job may not immediately start running,
+it will be scheduled onto the run queue
+as available to run imediately, but may wait depending on current scheduler availablility
+which may be such things as a NULL* (exclusive) job running or the maximum jobs already running.
+It will be run when the scheduler is able to start the job.</p>
+
+<hr>
+<a name=#holdon><h3>Holding a job</h3></a>
+<p>From the job status overview screen you can select the <em>[Actions]</em> button to obtain a list
+of possible commands you can issue for a job on the active queue.</p>
+<p>From this screen you can click on the button to hold the job. The effect will be that the 
+job goes into a hold state and will not automatically run at the time due. It will not run
+until the hold state has been cleared (see below).</p>
+<p>If you hold a 'repeat'ing job, it will not attempt to catch up any missing intervals.</p>
+
+<hr>
+<a name=#holdoff><h3>Releasing a job</h3></a>
+<p>From the job status overview screen you can select the <em>[Actions]</em> button to obtain a list
+of possible commands you can issue for a job on the active queue.</p>
+<p>One off the options is to clear the hold flag from the selected job. The effect of this is to
+requeue the job onto the active queue at the time it was origionally scheduled to run.</p>
+<p>It is important to note that 'repeating' jobs do not 'catchup'. If a job to run every 15 minutes
+has been held, then released; it will run at the original time and then reschdule to the next time
+after the current time, it will not attempt to catch up.</p>
+
+<hr>
+<a name=#delete><h3>Deleting a job</h3></a>
+<p>Deleting a job is a systems administrator function.</p>
+<p>Deleteing a job should only be done if this job is to also be deleted from the job definition database
+immediately after the job is deleeted from the active queue. Or more bluntly <b>only ever delete a job
+if it is never expected to run again</b>. Failure to adhere to this rule can result in time
+scheduling becoming corrupted.</p>
+<p>As such it is not available on the browser interface, it is something you can talk to
+you system administrator about.</p>
+
+<hr>
+
+<h2>Alert Management</h2>
+
+<hr>
+<a name=#ack><h3>Acknowledging an Alert</h3></a>
+<p>
+From the 'Active Tasks' menu option you can chose to display the
+current alert queue. One of the buttom options presented there is
+to acknowledge the alert.</p>
+<p>Note that this only changes the colour of the message when users view
+the alerts screen, it remains red on the job status screen, simply beacause
+an alert is an alert, and is treated as such on that screen.
+</p>
+
+<a name=#restart><h3>Restarting a failed job</h3></a>
+<p>From the 'Active Tasks' menu option you can chose to display the
+current alert queue. One of the buttom options presented there is
+the option to restart a job.
+<em>It is expected that the problem that caused the job to fail has
+	been corrected before the job is restarted.</em></p>
+<p>Note that the job will start running from the begining of the script.
+The scheduler is designed to work on discrete work units and dependencies, if some of your
+jobs do massive lots of work that havn't been split out; tough. The job will restart
+from the beginning.</p>
+
+<a name=#forceok><h3>Forcing a job from failed to completed state (into OK status)</h3></a>
+<p>This option has not been provided in the browser interface. It is
+available from the command line interface for systems administration use.
+</p><p>Your system administrators can review the job log to determine
+if a job needs rerunning, or is OK. If they decide it's OK they can
+force the alert to be cleared.<br> This option is not available to point and click
+as the job logs need to be reviewed before deciding this is an option, your system
+administrators can force the job to an OK state, so talk to them.</p>
+
+<hr>

@@ -1,0 +1,434 @@
+#!/bin/bash
+# ----------------------------------------------------------------------
+#
+#  This is a test script I run after I have made changes to the
+#  library. It is not an exhaustive test, but covers things I think
+#  may break.
+#
+#  It tries to check things in sequence, and bombs out at the first
+#  error so it can be fixed. This lets it test the internal functions
+#  and functions called by other functions early on to ensure they
+#  are working and are not the cause of failures in functions that
+#  call/rely-on them.
+#
+#  IT WILL NOT CHECK EVERYTHING. I can't think of everything.
+#
+#  As shipped with the shipped datelib file all checks are confirmed
+#  to work correctly, and tests pass.
+#  If when you run it you get failures, then UNDO YOUR CHANGES; the
+#  shipped library works, but if you make changes and the tests in 
+#  here then fail, then you have broken the library.
+#
+# ----------------------------------------------------------------------
+. ./datelib_ksh
+
+echo "Date library checks."
+echo ""
+echo "This script will do fairly minimal checks against the date"
+echo "library to confirm that all bits hang together properly."
+echo "This needs to be run after you make any changes to the library."
+echo ""
+echo "All tests in the script PASS OK when the script is run against"
+echo "the supplied library."
+echo "If when you run it you get failed tests, then either fix or"
+echo "backout the changes YOU or your sysadmins made to the library."
+echo ""
+
+# ***********************************************************************
+# Do some leap year checks.
+# ***********************************************************************
+echo "Leap year checks beginning"
+test_leap_year_check() {
+   yr=$1
+   expected=$2
+   global_result_value=99        # set to junk each iteration to make sure we 
+                                 # actually complete the function we call.
+   is_leap_year ${yr}
+   if [ "${global_result_value}." = "${expected}." ];
+   then
+       echo "   OK: ${yr} - check passed (${global_result_value})"
+   else
+       echo "   ${yr} - check failed (${global_result_value}), investigate"
+       echo "==== TEST ABORTING ===="
+       exit 1
+   fi
+} # test_leap_year_check
+test_leap_year_check 2003 0
+test_leap_year_check 2004 1
+test_leap_year_check 2005 0
+test_leap_year_check 2006 0
+test_leap_year_check 2007 0
+test_leap_year_check 2008 1
+test_leap_year_check 2010 0
+test_leap_year_check 2012 1
+echo "Passed."
+echo ""
+
+
+# ***********************************************************************
+# Check the routines that return quantities of values for internal
+# use, these are rather important as they could throw the whole
+# thing out if one fails.
+# ***********************************************************************
+echo "Checking quantative value procedures"
+echo "   Days in years..."
+normal_days=525600
+leap_days=527040
+check_minutes_in_year() {
+   yr=$1
+   myexpected="$2"
+   myyr=${yr}
+   get_minutes_in_year ${yr}
+   if [ "${global_result_value}." = "${myexpected}." ];
+   then
+       echo "   OK: ${myyr} - check passed (${global_result_value} minutes in ${myyr})"
+   else
+       echo "   FAILED ${myyr} - check failed, got ${global_result_value} minutes, expected ${myexpected}"
+       echo "==== TEST ABORTING ===="
+       exit 1
+   fi
+} # check_minutes_in_year
+check_minutes_in_year 2004 ${leap_days}    # Leap year
+check_minutes_in_year 2005 ${normal_days}  # not leap year
+check_minutes_in_year 2006 ${normal_days}  # not leap year
+check_minutes_in_year 2007 ${normal_days}  # not leap year
+check_minutes_in_year 2008 ${leap_days}    # Leap year
+check_minutes_in_year 2010 ${normal_days}  # not leap year
+check_minutes_in_year 2012 ${leap_days}    # Leap year
+
+echo "   Days in months..."
+check_days_in_month() {
+   yr=$1
+   mn="$2"
+   expected=$3
+   num_days_in ${yr} ${mn}
+   if [ "${global_result_value}." = "${expected}." ];
+   then
+       echo "   OK: - check passed, ${global_result_value} days in ${mn} ${yr})"
+   else
+       echo "   days in month check failed for ${mn} ${yr}, got ${global_result_value} days, expected ${expected}"
+       echo "==== TEST ABORTING ===="
+       exit 1
+   fi
+} # check_days_in_month
+echo "   (numeric months)"
+check_days_in_month 2004 1 31
+check_days_in_month 2004 2 29
+check_days_in_month 2004 3 31
+check_days_in_month 2004 4 30
+check_days_in_month 2004 05 31
+check_days_in_month 2004 06 30
+# check_days_in_month 2004 007 31    -- this will fail, expected
+check_days_in_month 2004 07 31
+check_days_in_month 2004 08 31
+check_days_in_month 2004 09 30
+check_days_in_month 2004 10 31
+check_days_in_month 2004 11 30
+check_days_in_month 2004 12 31
+echo "   (short months, mixed case)"
+check_days_in_month 2004 JAN 31
+check_days_in_month 2004 Feb 29
+check_days_in_month 2004 March 31
+check_days_in_month 2004 APRIL 30
+check_days_in_month 2004 may 31
+check_days_in_month 2004 jun 30
+check_days_in_month 2004 juL 31
+check_days_in_month 2004 aUg 31
+check_days_in_month 2004 Sep 30
+check_days_in_month 2004 oct 31
+check_days_in_month 2004 nov 30
+check_days_in_month 2004 DEC 31
+echo "   (long months, mixed case)"
+check_days_in_month 2004 JANUARY 31
+check_days_in_month 2004 February 29
+check_days_in_month 2004 March 31
+check_days_in_month 2004 APRIL 30
+check_days_in_month 2004 may 31
+check_days_in_month 2004 june 30
+check_days_in_month 2004 juLY 31
+check_days_in_month 2004 aUguST 31
+check_days_in_month 2004 SepTeMbEr 30
+check_days_in_month 2004 octOBER 31
+check_days_in_month 2004 NOVember 30
+check_days_in_month 2004 DECEMBER 31
+echo "   (a few leap year checks via procs tested here)"
+check_days_in_month 2004 2 29
+check_days_in_month 2005 2 28
+check_days_in_month 2006 2 28
+check_days_in_month 2007 2 28
+check_days_in_month 2008 2 29
+check_days_in_month 2009 2 28
+echo "Passed."
+echo ""
+
+
+# ***********************************************************************
+# Datestamp conversion routines, after all that is the libraries
+# main purpose in life.
+# ***********************************************************************
+echo ""
+echo "Checking datestamp conversions"
+echo "   (to and from a datestamp)"
+test_date_conversion() {
+   datetouse="$1"
+   expected="$2"
+   okfail2="$3"
+   if [ "${okfail2}." = "." ];
+   then
+      okfail2="NO"
+   fi
+   datestamp_calculate ${datetouse}
+   saveval=${global_result_value}
+   date_to_datestamp ${datetouse}   # should ignore extras
+   echo "      ${datetouse} method 1 = ${saveval}, method 2 = ${global_result_value}"
+   if [ ${global_result_value} -ne ${saveval} ];
+   then
+      if [ "${okfail2}." = "YES." ];
+      then
+         # One method uses the time, the other doesn't, so we can be up to
+         # 23:59 out without it being a problem.
+         testval=$((${saveval} - ${global_result_value}))
+         if [ ${testval} -gt ${one_days_minutes} ];   # a problem
+         then
+            echo "Response mismatch, library error - method results don't match"
+            echo "==== TEST ABORTING ===="
+            exit 1
+         fi
+      else
+         echo "Response mismatch, library error - method results don't match"
+         echo "==== TEST ABORTING ===="
+         exit 1
+      fi
+   fi
+   datestamp_to_date ${saveval}
+   if [ "${global_result_value}." != "${expected}." ];
+   then
+      echo "Conversion back from datestamp failed, got ${global_result_value}, expected ${expected}"
+      echo "==== TEST ABORTING ===="
+      exit 1
+   fi
+   echo "   OK - ${saveval} converts back into ${global_result_value}"
+} # test_date_conversion
+
+echo "      (conversion to datestamp, then back to a date, even & odd days)"
+test_date_conversion "2004 01 18 00:01" "2004 1 18"
+test_date_conversion "2004 01 19 00:01" "2004 1 19"
+test_date_conversion "2004 02 29 00:01" "2004 2 29"
+test_date_conversion "2005 02 28 00:01" "2005 2 28"
+test_date_conversion "2010 02 28 00:01" "2010 2 28"
+test_date_conversion "2010 02 28 23:59" "2010 2 28" "YES"
+test_date_conversion "2004 02 28 23:59" "2004 2 28" "YES"
+echo "Passed."
+echo ""
+
+# ***********************************************************************
+# Check the day sliding checks in leap years and non-leap years.
+# ***********************************************************************
+echo "   (day sliding checks)"
+
+# datestamps back and forward from the selected dates
+echo "   datestamp_offset_by_n_days tests"
+test_slider_datestamps() {
+   timestamptouse="$1"
+   direction="$2"
+   if [ "${direction}." = "FORWARD." ];
+   then
+      saveval=$((${timestamptouse} + (60 * 24 * 3)))   # manually go forward three days
+      datestamp_offset_by_n_days 3 ${timestamptouse}   # timestamp + three days
+   else
+      saveval=$((${timestamptouse} - (60 * 24 * 3)))   # manually go back three days
+      datestamp_offset_by_n_days -3 ${timestamptouse}  # timestamp - three days
+   fi
+   if [ ${global_result_value} -ne ${saveval} ];
+   then
+      echo "Response mismatch, library error, calculation offset 3 days ${direction} failed"
+      echo "Got ${global_response_value}, expected ${saveval}"
+      echo "==== TEST ABORTING ===="
+      exit 1
+   else
+      echo "   OK - got ${global_result_value} and expected ${saveval}"
+   fi
+
+} # test_slider_datestamps
+datestamp_calculate 2004 2 29
+test_slider_datestamps ${global_result_value} "BACKWARD"
+datestamp_calculate 2004 3 1
+test_slider_datestamps ${global_result_value} "BACKWARD"
+datestamp_calculate 2005 3 1
+test_slider_datestamps ${global_result_value} "BACKWARD"
+datestamp_calculate 2004 2 27
+test_slider_datestamps ${global_result_value} "FORWARD"
+datestamp_calculate 2005 2 27
+test_slider_datestamps ${global_result_value} "FORWARD"
+
+# dates back and forward from a selected date
+echo "   date_offset_by_n_days tests"
+test_slider_dates() {
+   datetouse="$1 $2 $3"
+   direction="$4"
+   date_to_datestamp ${datetouse}
+   if [ "${direction}." = "FORWARD." ];
+   then
+      saveval=$((${global_result_value} + (60 * 24 * 3)))   # manually go back three days
+   else
+      saveval=$((${global_result_value} - (60 * 24 * 3)))   # manually go back three days
+   fi
+   datestamp_to_date ${saveval}       # we tested this above, it must work here, get as YYYY [M]M DD
+   saveval=${global_result_value}
+   if [ "${direction}." = "FORWARD." ];
+   then
+      date_offset_by_n_days 3 ${datetouse}
+   else
+      date_offset_by_n_days -3 ${datetouse}
+   fi
+   if [ "${global_result_value}." != "${saveval}." ];
+   then
+      echo "Response mismatch, library error, calculation 3 days ${direction} failed"
+	  echo "Got ${global_result_value}, expected ${saveval}"
+      echo "==== TEST ABORTING ===="
+      exit 1
+   else
+      echo "   OK - the date three days ${direction} from ${datetouse} was ${global_result_value}"
+   fi
+} # test_slider_dates
+
+test_slider_dates 2004 2 29 "FORWARD"
+test_slider_dates 2004 3 1 "FORWARD"
+test_slider_dates 2004 3 1 "BACKWARD"
+test_slider_dates 2005 3 1 "FORWARD"
+test_slider_dates 2005 3 1 "BACKWARD"
+test_slider_dates 2005 1 1 "FORWARD"
+test_slider_dates 2008 1 2 "FORWARD"
+
+# And test the days back from today
+echo "   date_n_days_ago test"
+datestamp_time_now
+saveval=$((${global_result_value} - (60 * 24 * 3)))   # manually go back three days
+datestamp_to_date ${saveval}       # we tested this above, it must work here, get as YYYY [M]M DD
+saveval="${global_result_value}"
+date_n_days_ago 3                  # as YYYY [M]M DD
+if [ "${global_result_value}." != "${saveval}." ];
+then
+   echo "Response mismatch, library error, calculation back 3 days failed"
+   echo "==== TEST ABORTING ===="
+   exit 1
+else
+   echo "   OK - the date three days ago was  ${saveval} [MANUALLY CHECK ME]"
+fi
+echo "Passed."
+echo ""
+
+# ***********************************************************************
+# Check the day name calculation routines.
+# ***********************************************************************
+echo "Day name calculations..."
+test_day_names() {
+   expected="$1"
+   ymd="$2 $3 $4"
+   day_of_week ${ymd}
+   if [ "${expected}." != "${global_result_value}." ];
+   then
+      echo "Response mismatch, library error, dayname calculation failed"
+      echo "Got ${global_result_value}, expected ${expected}"
+      if [ "${ymd}." = "  ." ];
+      then
+         echo "The date being processed was Todays date"
+      else
+         echo "The date being processed was ${ymd}"
+      fi
+      echo "==== TEST ABORTING ===="
+      exit 1
+   fi
+   if [ "${ymd}." = "  ." ];
+   then 
+     ymd="Today"
+   fi
+   echo "   OK - Expected ${expected} for ${ymd}, got ${global_result_value}"
+} # test_day_names
+
+# Across a leap year
+test_day_names "Wednesday" 2004 01 28
+test_day_names "Thursday" 2004 01 29
+test_day_names "Friday" 2004 01 30
+# Back forward a few months
+test_day_names "Friday" 2004 01 02
+test_day_names "Sunday" 2004 02 15
+# Back forward a year or so
+test_day_names "Monday" 2003 11 17
+test_day_names "Tuesday" 2005 02 08
+      
+echo "Passed."
+echo ""
+
+# ***********************************************************************
+# Check the file timestamp checking tools.
+# ***********************************************************************
+echo ""
+echo "File timestamp date routine checks"
+filenametouse="zzzzz.delme"        # test file name
+
+if [ ! -f ${filenametouse} ];
+then
+   echo "   (testing days in the past, using 2003 01 01)"
+   hhmmnow=`date +"%H%M"`
+   hhmmnow2=`date +"%H:%M"`
+   touch -m 0101${hhmmnow}03 ${filenametouse}
+   ls -la ${filenametouse}         # For debugging
+   datestamp_calculate 2003 01 01 ${hhmmnow2}
+   fileexpectedtime=${global_result_value}
+   datestamp_time_now
+   fileexpecteddiff=$((${global_result_value} - ${fileexpectedtime}))
+   minutes_since_file_modified ${filenametouse}
+   if [ "${global_result_value}." = "${fileexpecteddiff}." ];
+   then
+      echo "   OK - got expected result (${global_result_value})"
+   else
+      echo "   WARNING: Response mismatch, expected ${fileexpecteddiff}, got ${global_result_value}"
+      echo "   If checking on a previous years file there is no hh:mm to use so it will be"
+      echo "   hh:mm minutes out from the expected time."
+      echo "   If the file being checked is for a previous year, and the next check passes"
+      echo "   then there is no problem."
+   fi
+
+   fileexpecteddiff=$((${fileexpecteddiff} / ${one_days_minutes}))
+   days_since_file_modified ${filenametouse}
+   if [ "${global_result_value}." = "${fileexpecteddiff}." ];
+   then
+      echo "   OK - got expected result (${global_result_value})"
+   else
+      echo "Response mismatch, expected ${fileexpecteddiff}, got ${global_result_value}"
+      echo "==== TEST ABORTING ===="
+      rm -f ${filenametouse}
+      exit 1
+   fi
+
+   echo "   (testing current time)"
+   touch ${filenametouse}
+   ls -la ${filenametouse}         # For debugging
+   minutes_since_file_modified ${filenametouse}
+   if [ "${global_result_value}." = "0." ];
+   then
+      echo "   OK - expected 0, got ${global_result_value}"
+   else
+      echo "   WARNING: Response mismatch, expected 0, got ${global_result_value}"
+      echo "   If only one difference OK, its a minute check after all and we may have moved a minute."
+   fi
+   days_since_file_modified ${filenametouse}
+   if [ "${global_result_value}." = "0." ];
+   then
+      echo "   OK - expected 0, got ${global_result_value}"
+   else
+      echo "Response mismatch, expected 0, got ${global_result_value}"
+      echo "==== TEST ABORTING ===="
+      rm -f ${filenametouse}
+      exit 1
+   fi
+   rm -f ${filenametouse}
+else
+   echo "Unable to do filetime tests, file ${filenametouse} already exists"
+fi
+
+echo ""
+echo "-- End of tests --"
+# Done
+exit 0

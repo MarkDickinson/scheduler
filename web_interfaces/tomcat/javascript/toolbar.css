@@ -1,0 +1,63 @@
+.tbToolbar { 
+	border-top:1px solid black; 
+	border-bottom:1px solid black; 
+	background-color: white;
+	width:auto%;
+	height:25px; 
+	padding-top:2px; 
+	padding-bottom:2px; 
+	padding-left:15px; 
+	margin: 0px;
+	color:#000000;
+	position:relative;
+}
+.tbSubMenu {
+	border:1px solid black;
+	background-color: white;
+	color: black;
+	padding:2px;
+	display: none;
+	cursor: hand;
+	position:Absolute;
+}
+.tbItem { 
+	padding-left:2px;
+	padding-right:2px;
+	margin:2px;
+	text-decoration: none;
+	border:1px solid white;
+}
+.tbItemSelected { 
+	padding-left:2px;
+	padding-right:2px;
+	margin:2px;
+	text-decoration: none;
+	border:1px solid #c0c0c0;
+	background-color:#f0f0f0;
+	color:black;
+	position:relative;
+}
+
+.tbItemLink { 
+	cursor:default; 
+	padding:0px; 
+	margin:0px;
+}
+.tbSubItemLink { 
+	cursor:select; 
+	padding:0px; 
+	margin:0px;
+	min-width:80px;
+	border:1px solid white;
+	white-space: nowrap;
+}
+.tbSubItemLinkSelected { 
+	cursor:pointer; 
+	padding:0px; 
+	margin:0px;
+	margin-right: auto;
+	min-width:80px;
+	border:1px solid #c0c0c0;
+	background-color:#f0f0f0;
+	white-space: nowrap;
+}

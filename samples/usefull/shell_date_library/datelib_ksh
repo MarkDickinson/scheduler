@@ -1,0 +1,607 @@
+# ****************************************************************
+#
+# datelib:               
+#
+# date utility library.
+#
+# Documentation is (will be) at the end of the file.
+#
+# ****************************************************************
+
+# _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+#
+#             The general purpose date routines
+# _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+global_result_value=""  # Use to pass data back from functions
+baseyear=2003           # BASE year used for all timestamps...
+                        # This is as far back as we will calculate
+                        # Must be (current-year - 1) or lower.
+one_days_minutes=$((60 * 24))
+
+
+# ----------------------------------------------------------------
+# datelib_error;
+# Called if any of the routines detect an obvious error.
+# ----------------------------------------------------------------
+datelib_error() {
+    callerid="$1"
+	details="$2 $3 $4 $5 $6 $7 $8 $9"
+	echo "**********************************************************"
+	echo "* FATAL DATE LIBRARY ERROR:"
+	echo "*"
+	echo "* Detected in ${callerid}"
+	echo "*"
+	echo "* Details: ${details}"
+	echo "*"
+	echo "* Correct your script and retry !"
+	echo "*"
+	echo "**********************************************************"
+    exit 1
+} # datelib_error
+
+
+# ----------------------------------------------------------------
+# is_leap_year:
+#    passed  - year number
+#    returns - 1 if a leap year, 0 if not
+# ----------------------------------------------------------------
+is_leap_year() {
+   yeartocheck=$1
+
+   # Leap year if...
+   # If divisable by 4 and not divisable by 100
+   # If divisable by 400
+   ((R1 = ${yeartocheck}%4))    # remainder of year / 4
+   ((R2 = ${yeartocheck}%100))  # remainder of year / 100
+   ((R3 = ${yeartocheck}%400))  # remainder of year / 400
+
+   if [ ${R1} -eq 0 -a ${R2} -ne 0 -o ${R3} -eq 0 ];
+   then
+      resultvar=1
+   else
+      resultvar=0
+   fi
+
+   global_result_value=${resultvar}
+} # is_leap_year
+
+
+# ----------------------------------------------------------------
+# datestamp_calculate;
+#    passed  - Year Month Date Time
+#    returns - minutes since Jan 1, $baseyear 00:00
+#    notes - year, month, day must be space seperated;
+#            time must be hh:mm
+# ----------------------------------------------------------------
+datestamp_calculate() {
+  yr=$1
+  mn="$2"
+  daynum=$3
+  hrmn=$4
+  timestamp_total=0 # nothing worked out yet 
+
+  # --- YEAR checks and processing ---
+  # 1. Ensure we do not go back prior to our base year.
+  if [ ${yr} -lt ${baseyear} ];
+  then
+     datelib_error "datestamp_calculate" "Year provided is <" ${baseyear} "(provided year was" ${yr} ")"
+  fi
+  # 2. Start off at 0
+  yeardays=0
+  # 3. Do any year catchup processing needed
+  if [ ${baseyear} -lt ${yr} ];
+  then
+     xx=${baseyear}
+     while [ ${xx} -lt ${yr} ];
+     do
+        yeardays=$(( 10#${yeardays} + 365 ))
+        is_leap_year ${xx}
+        if [ "${global_result_value}." != "0." ];
+        then
+          yeardays=$(( 10#${yeardays} + 1 )) # an extra day in a leap year
+        fi
+        xx=$(( 10#${xx} + 1 ))
+     done
+  fi
+
+  # --- MONTH checks and processing ---
+  # 1. Convert the month to something usefull
+  #    NOTES: man page says something like Oct* should work,
+  #           it doesn't !. So code all possibilities allowed.
+  mn=`echo "${mn}" | tr [:upper:] [:lower:]`  # lowercase month name passed
+  case $mn in
+    "jan"|"january"|"01"|"1")   mn=1;;
+    "feb"|"february"|"02"|"2")  mn=2;;
+    "mar"|"march"|"03"|"3")     mn=3;;
+    "apr"|"april"|"04"|"4")     mn=4;;
+    "may"|"05"|"5")             mn=5;;
+    "jun"|"june"|"06"|"6")      mn=6;;
+    "jul"|"july"|"07"|"7")      mn=7;;
+    "aug"|"august"|"08"|"8")    mn=8;;
+    "sep"|"september"|"09"|"9") mn=9;;
+    "oct"|"october"|"10")       mn=10;;
+    "nov"|"november"|"11")      mn=11;;
+    "dec"|"december"|"12")      mn=12;;
+    *) datelib_error "datestamp_calculate" "Month passed is invalid, value passed was" ${mn}
+       break;;
+  esac
+  # 2. Start off at 0
+  monthdays=0
+  # 3. Work out the days until now
+  xx=1
+  while [ ${xx} -lt ${mn} ];
+  do
+     case $xx in
+        "1") monthdays=$(( ${monthdays} + 31 ));;
+        "2") monthdays=$(( ${monthdays} + 28 ));;
+        "3") monthdays=$(( ${monthdays} + 31 ));;
+        "4") monthdays=$(( ${monthdays} + 30 ));;
+        "5") monthdays=$(( ${monthdays} + 31 ));;
+        "6") monthdays=$(( ${monthdays} + 30 ));;
+        "7") monthdays=$(( ${monthdays} + 31 ));;
+        "8") monthdays=$(( ${monthdays} + 31 ));;
+        "9") monthdays=$(( ${monthdays} + 30 ));;
+        "10") monthdays=$(( ${monthdays} + 31 ));;
+        "11") monthdays=$(( ${monthdays} + 30 ));;
+        "12") monthdays=$(( ${monthdays} + 31 ));;
+        *) datelib_error "datestamp_calculate" "Month logic failed, library error"
+           break;;
+     esac
+     xx=$(( ${xx} + 1 ))
+  done
+  # If gone past feb see if a leap year
+  is_leap_year ${yr}
+  if [ "${global_result_value}." != "0." ];
+  then
+     if [ ${mn} -gt 2 ];
+     then
+        monthdays=$(( ${monthdays} + 1 ))
+     fi
+  fi
+
+  # --- DAY checks and processing ---
+  # n/a - $daynum will have correct days
+
+  # --- HH:MM processing ---
+  # The hour minute calculations
+  hr=`echo "${hrmn}" | cut -d: -f1`
+  mn=`echo "${hrmn}" | cut -d: -f2`
+  # calculation crashes if leading 0's in first number, treats as octal, force base 10
+  hrmn_num=$(( 10#${hr} * 60 ))       # add minutes on seperate line or script crashes
+  hrmn_num=$(( 10#${hrmn_num} + 10#${mn} ))
+
+  # --- Convert the calculated days to minutes, put it all together ---
+  totaldays=$((${yeardays} + ${monthdays} + 10#${daynum}))
+  timestamp=$(( ${totaldays} * ${one_days_minutes} ))
+  timestamp=$(( ${timestamp} + ${hrmn_num} ))
+
+  # --- DONE ---
+  global_result_value=${timestamp}
+} # datestamp_calculate
+
+
+# ----------------------------------------------------------------
+# datestamp_time_now:
+#   passed  - n/a
+#   returns - a timestamp for the time right now
+# ----------------------------------------------------------------
+datestamp_time_now() {
+  # get the time of day now in minutes, by processing output from date command.
+  year_month_date_time=`date | awk {'print $6 " " $2 " " $3 " " $4'}`
+  datestamp_calculate ${year_month_date_time}
+  # note: above proc has set global_result_value correctly
+} # datestamp_time_now
+
+
+# ----------------------------------------------------------------
+# date_n_days_ago:
+#    passed  - the number of days in the past to get the date of
+#    returns - date as YYYY [M]M DD of the date $1 days back from
+#              the current date
+#    NOTES: does not use the other day offset routines as we do
+#           not allow this to return a date in the future.
+# ----------------------------------------------------------------
+date_n_days_ago() {
+   days_back="$1"
+   datestamp_time_now
+   nowdate=${global_result_value}
+   go_back=$((10#${days_back} * ${one_days_minutes}))
+   date_number=$(( ${nowdate} - ${go_back} ))
+   datestamp_to_date ${date_number}
+} # date_n_days_ago
+
+
+# ----------------------------------------------------------------
+# how_many_days_ago:
+#    passed  - a datestamp you want to obtain the number of days
+#              between it and the current day
+#    returns - the number of days in the past (0 if in the future).
+# ----------------------------------------------------------------
+how_many_days_ago() {
+   testdate="$1"
+   datestamp_time_now
+   nowdate=${global_result_value}
+   minutes=$((${nowdate} - 10#${testdate}))
+   if [ ${minutes} -lt 0 ];
+   then
+      global_result_value=0
+   else
+      global_result_value=$((${minutes} / ${one_days_minutes}))
+   fi
+} # how_many_days_ago
+
+
+# ----------------------------------------------------------------
+# get_minutes_in_year:
+#    passed  - the year number
+#    returns - the number of minutes in the year passed
+# ----------------------------------------------------------------
+get_minutes_in_year() {
+   yr=$1
+   datestamp_calculate ${yr} 1 1 00:00
+   X1=${global_result_value}
+   yr=$((10#${yr} + 1))
+   datestamp_calculate ${yr} 1 1 00:00
+   X2=${global_result_value}
+   global_result_value=$((${X2} - ${X1}))
+} # get_minutes_in_year
+
+
+# ----------------------------------------------------------------
+# num_days_in:
+#    passed  - the year number, and the month name or number
+#    returns - the number of days in the month
+# ----------------------------------------------------------------
+num_days_in() {
+  yr=$1
+  mn=$2
+
+  # Sanity check the year
+  if [ ${yr} -lt ${baseyear} ];
+  then
+     datelib_error "num_days_in" "Year provided is <" ${baseyear} "(provided year was" ${yr} ")"
+  fi
+
+  # Lowercase the month name passed
+  mn=`echo "${mn}" | tr [:upper:] [:lower:]`
+
+  # Default days in each month
+  case $mn in
+    "jan"|"january"|"01"|1)   days=31;;
+    "feb"|"february"|"02"|2)  days=28
+                              mn=2;;    # set this for leap year check
+    "mar"|"march"|"03"|3)     days=31;;
+    "apr"|"april"|"04"|4)     days=30;;
+    "may"|"05"|5)             days=31;;
+    "jun"|"june"|"06"|6)      days=30;;
+    "jul"|"july"|"07"|7)      days=31;;
+    "aug"|"august"|"08"|8)    days=31;;
+    "sep"|"september"|"09"|9) days=30;;
+    "oct"|"october"|"10"|10)  days=31;;
+    "nov"|"november"|"11"|11) days=30;;
+    "dec"|"december"|"12"|12) days=31;;
+    *) datelib_error "num_days_in" "Month passed is invalid, value passed was" ${mn}
+       break;;
+  esac
+
+  # If feb see if a leap year
+  if [ "${mn}." = "2." ];
+  then
+     is_leap_year ${yr}
+     if [ ${global_result_value} -eq 1 ];
+     then
+        days=$(( ${days} + 1 ))
+     fi
+  fi
+
+  # --- DONE ---
+  global_result_value=${days}
+} # num_days_in
+
+
+# ----------------------------------------------------------------
+# datestamp_to_date:
+#    passed  - the datestamp for a date
+#    returns - YYYY MM DD
+# ----------------------------------------------------------------
+datestamp_to_date() {
+   totalminutes=$1
+   yrs=${baseyear}   # If using yr it gets overwritten by called procs
+   # Start with the minutes in the baseyear year
+   get_minutes_in_year ${yrs}
+   yrmins=${global_result_value}
+   yr2=${yrs}  # due to the way linux bash handles passed variables the
+              # value of yr is nor preserved when exiting the loop,
+              # using a new local variable overcomes that.
+   totalmins=${totalminutes}  # as above
+
+   # Loop, subtracting each years minutes from totalminutes and incrementing the
+   # year yrmins minute value until we get to year in the timestamp,
+   # which is when the totalminutes left are < an entire years minutes.
+      while [ ${yrmins} -lt ${totalmins} ];
+      do   
+         totalmins=$((${totalmins} - ${yrmins}))
+         yr2=$((${yr2} + 1))
+         get_minutes_in_year ${yr2}
+         yrmins=${global_result_value}
+      done
+
+   # Now we should have the correct year
+   # how many days left
+   totaldays=$((${totalmins} / ${one_days_minutes}))
+   # no need to trap rounding errors, if we have anythe minutes
+   # havn't been added to the timstamps correctly
+
+   # now work out where it is
+   test_month=1                             # start from January
+   num_days_in ${yr2} ${test_month}
+   test_days=${global_result_value}
+   while [ ${test_days} -lt ${totaldays} ];
+   do
+      totaldays=$((${totaldays} - ${test_days}))
+      test_month=$((${test_month} + 1))
+      num_days_in ${yr2} ${test_month}
+      test_days=${global_result_value}
+   done
+
+   global_result_value="${yr2} ${test_month} ${totaldays}"   
+} # datestamp_to_date
+
+
+# ----------------------------------------------------------------
+# date_to_datestamp:
+#    passed  - YYYY MM DD
+#    returns - the datestamp for the date
+# ----------------------------------------------------------------
+date_to_datestamp() {
+  datestamp_calculate $1 $2 $3 00:01
+} # date_to_datestamp
+
+
+# ----------------------------------------------------------------
+# datestamp_offset_by_n_days:
+#    passed  - number of days to move (may be -), datestamp for a date
+#    returns - the datestamo adjusted by $2 days
+#    NOTES: days first, to allow for the datestamp to contain
+#           time values (HH:MM) we can discard, which we could't
+#           do easily if they came before the day number.
+# ----------------------------------------------------------------
+datestamp_offset_by_n_days() {
+   daysmove=$1
+   daymovement=$((10#${daysmove} * ${one_days_minutes}))
+   savedate=$2
+   global_result_value=$((${savedate} + ${daymovement}))
+} # datestamp_offset_by_n_days
+
+
+# ----------------------------------------------------------------
+# date_offset_by_n_days:
+#    passed  - number of days to move (may be -), date as YYYY M|MM|MMM|MMMMM... DD
+#    returns - date as YYYY [M]M DD
+#    NOTES: days first, to allow for the datestamp to contain
+#           time values (HH:MM) we can discard, which we could't
+#           do easily if they came before the day number.
+# ----------------------------------------------------------------
+date_offset_by_n_days() {
+   daymovement="$1"
+   savedate="$2 $3 $4 $5 $6"
+   if [ "${daymovement}." = "." ];
+   then
+      datelib_error "date_offset_by_n_days" "No parameters were provided !."
+   fi
+   if [ "${savedate}." = "." ];
+   then
+      datelib_error "date_offset_by_n_days" "No date to use as a base was provide !."
+   fi
+   daymovement=$(($1 * ${one_days_minutes}))
+   date_to_datestamp ${savedate}
+   finaldate=$((${global_result_value} + 10#${daymovement}))
+   datestamp_to_date ${finaldate}
+} # date_offset_by_n_days
+
+
+# ----------------------------------------------------------------
+# day_of_week:
+#    passed  - optional date as YYYY M|MM|MMM|MMMMM... DD. If
+#              the date is not passed default to todays date.
+#    returns - the day name as Monday - Sunday
+# ----------------------------------------------------------------
+day_of_week() {
+   # Save what date was requested
+   temp_date="$*"
+   requested_date="${temp_date}"  # copy out from $1...
+   # If no requested date assume todays date
+   if [ "${requested_date}." = "." ];
+   then
+      requested_date=`date | awk {'print $6 " " $2 " " $3'}` # Y M D
+   fi
+   # Get the date now as the base for our calculations
+   datestamp_time_now
+   nowtime=$(( ${global_result_value} / ${one_days_minutes} ))
+   nowday=`date | awk {'print $1'}`
+   # Solaris returns the full day, linux (mandrake) the three character one,
+   # allow for both here.
+   case "${nowday}" in
+     "Monday"|"Mon")    nowday=1
+                  ;;
+     "Tuesday"|"Tue")   nowday=2
+                  ;;
+     "Wednesday"|"Wed") nowday=3
+                  ;;
+     "Thursday"|"Thu")  nowday=4
+                  ;;
+     "Friday"|"Fri")    nowday=5
+                  ;;
+     "Saturday"|"Sat")  nowday=6
+                  ;;
+     "Sunday"|"Sun")    nowday=0
+                  ;;
+     *)           datelib_error "day_of_week" "date returned an invalid day (" ${nowday} ")"
+                  ;;
+   esac
+   # get the datestamp of the date requested, and calculate days difference
+   date_to_datestamp ${requested_date}
+   reqtime=$(( ${global_result_value} / ${one_days_minutes} ))
+   days_diff=$(( ${nowtime} - ${reqtime} ))
+   ((days_diff = ${days_diff}%7))   # remainder of year / 7
+   newday=${nowday}                 # start value, today as calculated above
+   if [ ${days_diff} -lt 0 ];       # In the future, add days
+   then
+      newday=$(( ${newday} + (${days_diff} * -1) ))
+   else                             # In the past, subtract days
+      newday=$(( ${newday} - ${days_diff} ))
+   fi
+   # Check the values, and adjust to within a legal range, we could be +/-
+   # the range expected now (ie: if currentday=4 and diff=[+/-]6 could be -2 or 10.
+   if [ ${newday} -lt 0 ];      # we could subtract -ve, ie today=4, diff=6
+   then
+      newday=$(( ${newday} + 7 ))
+   fi
+   if [ ${newday} -gt 6 ];      # we could be 7 legally, or above from a day add, check
+   then
+      newday=$(( ${newday} - 7 ))
+   fi
+   case ${newday} in
+      0) newday="Sunday"
+                 ;;
+      1) newday="Monday"
+                 ;;
+      2) newday="Tuesday"
+                 ;;
+      3) newday="Wednesday"
+                 ;;
+      4) newday="Thursday"
+                 ;;
+      5) newday="Friday"
+                 ;;
+      6) newday="Saturday"
+                 ;;
+      *) datelib_error "day_of_week" "Internal library error, newday=" ${newday} ", function failed"
+                 ;;
+   esac
+   global_result_value=${newday}
+} # day_of_week
+
+
+# _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+#
+#       Some file checking routines I have found usefull.
+# _._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._._
+
+
+# ----------------------------------------------------------------
+# minutes_since_file_modified:
+#    passed  - a file name to check timestamp of
+#    returns - minutes since the file was last modified
+# ----------------------------------------------------------------
+minutes_since_file_modified() {
+  filename=$1
+  # get the timestamp for right now
+  datestamp_time_now
+  timenow=${global_result_value}
+  year_now=`date | awk {'print $6'}`
+
+  #
+  if [ -f ${filename} ];
+  then
+     dataline=`ls -la ${filename}`
+     hrmn=`echo "${dataline}" | awk {'print $8'} | grep ":"`
+     if [ "${hrmn}." = "." ];  # If empty there is no ":" in the string, so assume a previous year
+     then
+        year_month_date_time=`echo "${dataline}" | awk {'print $8 " " $6 " " $7'}`
+        datestamp_calculate ${year_month_date_time} 00:00
+        filetime=${global_result_value}
+     else                      # assume current year, get month day time
+        year_month_date_time=`echo "${dataline}" | awk {'print $6 " " $7 " " $8'}`
+        datestamp_calculate ${year_now} ${year_month_date_time}
+        filetime=${global_result_value}
+     fi
+     modtime=$(( ${timenow} - ${filetime} ))
+  else
+     modtime=0
+  fi
+
+  global_result_value=${modtime}
+} # minutes_since_file_modified
+
+
+# ----------------------------------------------------------------
+# days_since_file_modified:
+#    passed  - a file name to check timestamp of
+#    returns - days since the file was last modified
+# ----------------------------------------------------------------
+days_since_file_modified() {
+  filename=$1
+  minutes_since_file_modified ${filename}
+  global_result_value=$((${global_result_value} / ${one_days_minutes}))
+} # days_since_file_modified
+
+
+# ****************************************************************
+#
+#  datelib_ksh:  Mark Dickinson, 2004
+#
+#  A helper library for all those scripts that need to do
+#  date calculations from within scripts, to make it a little
+#  less painfull.
+#
+#  Calculates 'timestamps' based on the number of minutes from
+#  Jan 1 $baseyear, where baseyear is defined at the top of this
+#  file.
+#  You should adjust $baseyear at the top of the file as time
+#  goes on to ensure you never blow out any number limits, but
+#  remember when doing so to always have it at least one year in
+#  the past.
+# 
+#  KEY VARIABLE: global_result_value is used to store the result
+#                of ant function call. This is simply because script
+#                functions don't pass results easily (ie: via `cmd`).
+#                It is the callers responsibility to retrieve the
+#                value.
+#
+#  caution: performs only limited checking of the variable values you
+#           pass into the library.
+#
+#  DISCLAIMER
+#  ==========
+#  This is not warented for suitability in any environment, use
+#  this at your own risk. The author accepts no liability for
+#  any damage caused by this script failing to work as
+#  documented.
+#  You ARE expected to test any scripts you write using this
+#  library before migrating them to production.
+#
+#  Function Reference
+#  ==================
+#  Remember, results are stored in $global_result_value.
+#  DATESTAMP is the number of minutes since BASEYEAR 1 Jan 00:00
+#  Virtually all moth formats are supported
+#    [M]M indicates a month number that may be 1 or 2 characters
+#    MMM is a month in the form Jan - Dec
+#    MMMM... is a month in the form January - December
+#
+#  Date Routines:
+#  --------------
+#  datelib_error - INTERNAL USE ONLY, lets you know if you screw up by halting your script
+#  datestamp_calculate YYYY [M]M|MMM|MMMM... DD HH:MM - returns minutes since baseyear for datetime
+#  datestamp_time_now  - returns minutes since baseyear to now
+#  datestamp_to_date DATESTAMP - returns the YYYY MM DD for the DATESTAMP
+#  datestamp_offset_by_n_days [-]nn DATESTAMP - returns the datestamp passed offset by [-]nn days
+#  date_n_days_ago nn - returns YYYY [M]M DD date n days back from current day
+#  date_to_datestamp YYYY MM DD - returns the date as a datestamp
+#  date_offset_by_n_days [-]nn YYYY nn|MMM|MMMM... DD - returns YYYY [M]M DD of the date passed offset by [-]nn 
+#  day_of_week [ YYYY nn|MMM|MMMM... DD ] - returns Monday...Sunday 
+#  get_minutes_in_year YYYY - returns the number of minutes in a year (used internally)
+#  how_many_days_ago DATESTAMP - returns the number of days in the past a DATESTAMP is for (0 if in future)
+#  is_leap_year_check YYYY - returns 1 if it is leap year, 0 if not
+#  num_days_in YYYY [M]M|MMMM.. - returns the number of days in the year/month
+#
+#  File helpers:
+#  -------------
+#  minutes_since_file_modified filename - returns minutes since file was modified
+#  days_since_file_modified filename - returns days since file was modified
+#
+#  TODO: Make sure a day range passed is valid
+#
+# ****************************************************************

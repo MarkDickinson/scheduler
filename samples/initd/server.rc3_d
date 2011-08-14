@@ -1,0 +1,389 @@
+# chkconfig: 35 99 10
+# description: Marks job scheduler
+# ---------------------------------------------------------
+#
+# rcX.d script for Marks Job Scheduler server
+#
+# Script documentation is at the end of the file.
+#
+# ONLY CHANGE THINGS IN THE CUSTOMISATION BLOCK BELOW
+#
+# ---------------------------------------------------------
+#
+# =========================================================
+# Customise the below if you have them in different places
+#
+# The tcpip socket we are going to use, the default is 9002.
+# If this is changed you will also need to supply a port
+# number each time you run the jobsched_cmd program as that
+# also defaults to 9002.
+
+prod_port_num='9002'
+
+# The ip address the server is to listen on. This should
+# be changed to an internal interface address if you
+# have any external facing ip adresses in the network.
+local_host="127.0.0.1"
+
+# The location where this installation of the scheduler 
+# instance is. The datafiles will be in this directory,
+# and the bin, jobs, logs and joblogs will all be under
+# this directory.
+
+installed_dir='/opt/dickinson/scheduler'
+
+# The maximimum number of minutes to wait for the tcpip port
+# to be released when we are trying to restart the server.
+max_tcpip_wait=10
+#
+#               End customisation section
+# =========================================================
+# ----------------------------------------------------------
+#
+# You should not touch anything below
+#
+
+# Note: I have used ps -eo args rather than ps -ef as grep won't
+# process a full line of a ps -ef output.
+# This may also catch you out if you use longer path names than
+# those above. grep only seems to check about 60 bytes.
+sched_cmd_pgm="bin/jobsched_cmd ${prod_port_num} ${local_host}"
+if [ "${local_host}." != "127.0.0.1." ];
+then   # used identified interface
+   prod_run_cmd="bin/jobsched_daemon ${prod_port_num} ${local_host}"
+else   # listen on all interfaces
+   prod_run_cmd="bin/jobsched_daemon ${prod_port_num}"
+fi
+
+# Used to determine is we are at a shutdown runlevel
+# has to be global
+shutdown=0
+
+# ----------------------------------------------------------
+# Checks the system runlevel to see if the server is 
+# shutting down. We need to know this as this determines 
+# whther we do a clean 'waited' shutdown or (if the system
+# is going down) if we need to force the scheduler down 
+# immediately before the system shutdown kills it. If we
+# force it down the scheduler is able to set alert flags
+# for any job in mid-flight at the time.
+# ----------------------------------------------------------
+system_shutting_down() {
+   # Adjust the global flag from 0 to 1 if runlevel is 0, 1 or 6.
+   # This is so we know if during the stop request we must force the
+   # server down or is we do a normal 'wait for all jobs' stop.
+   shutdown=0                         # default is not shutting down
+   if [ -x /sbin/runlevel ];          # only check if runlevel program exists
+   then
+       b=`/sbin/runlevel`                 # get prev and current runlevel
+       for a in $b; do curlev=$a; done;   # only want the current
+       if [ "${curlev}." == "0." ];       # is it going to powerdown
+       then
+         shutdown=1
+       fi
+       if [ "${curlev}." == "6." ];       # is it going to reboot
+       then
+         shutdown=1
+       fi
+       if [ "${curlev}." == "1." ];       # is it going to single user
+       then
+         shutdown=1
+       fi
+   fi
+} # end system_shutting_down
+
+# ----------------------------------------------------------
+# Stop the server in a tidy way by issuing the shutdown
+# command. It will normally stop when the last running job
+# has completed.
+# If we have determined the system is shutting down however
+# we force the scheduler down immediately which sets alert
+# flags for any jobs that are actually running.
+# ----------------------------------------------------------
+stop() {
+    a=`ps -eo args | grep "${prod_run_cmd}" | grep -v "grep"`
+    if [ ".${a}" != "." ];
+    then
+	   system_shutting_down   # shutdown will be one if runlevel is 0, 1 or 6
+	   if [ "${shutdown}." == "0." ];
+	   then
+          echo "AUTOLOGON" > /tmp/sched_shutdown_infile
+          echo "SCHED SHUTDOWN" >> /tmp/sched_shutdown_infile
+          cat /tmp/sched_shutdown_infile | ${sched_cmd_pgm} > /tmp/sched_shutdown
+	      logger "$0, Job Scheduler server shutdown request issued, shutdown pending"
+	      rm /tmp/sched_shutdown_infile
+       else
+          # Only ever forcedown in the init script when the system is
+		  # going down as it only kills the tasks the scheduler spawned, not
+		  # any children they may have started.
+          echo "AUTOLOGON" > /tmp/sched_shutdown_infile
+          echo "SCHED SHUTDOWN FORCEDOWN" >> /tmp/sched_shutdown_infile
+          cat /tmp/sched_shutdown_infile | ${sched_cmd_pgm} > /tmp/sched_shutdown
+	      logger "$0, Job Scheduler FORCED server shutdown request issued"
+	   fi
+	else
+        echo "Job scheduler is not running"
+    fi
+} # end of stop
+
+# ----------------------------------------------------------
+# Only ever called internally to check the startup, if the server finds the
+# port is still in use. I had to add this as the netstat sometimes failed to
+# pick up that the port was still in use.
+# We will loop as long as we are under max-retries and the startup error
+# returned is 2 (port in use).
+# ----------------------------------------------------------
+startquiet() {
+	# One final check to make sure its not actually started yet.
+    a=`ps -eo args | grep "${prod_run_cmd}" | grep -v "grep"`
+    if [ ".${a}" == "." ];
+    then
+       retry_count=0
+	   while [ ${retry_count} -lt ${max_tcpip_wait} ];
+	   do
+		   sleep 60
+           ${prod_run_cmd}
+           a=$?
+           if [ "${a}." == "0." ];
+           then
+               logger "$0, Job Scheduler started OK"
+			   exit 0
+           else
+              if [ "${a}." == "2." ];
+              then
+	             retry_count=$((${retry_count}+1))
+              else
+                 logger "$0, Job Scheduler could not start, fatal errors, see log !"
+		         exit 1
+              fi
+           fi
+	   done
+       logger "$0 has exceeded maximum retry attempts (${max_tcpip_wait} minutes)"
+       logger "$0, Job Scheduler was unable to start, tcpip port ${prod_port} is in use"
+	   exit 1
+    fi
+} # end of startquiet
+
+# ----------------------------------------------------------
+# Assumes STOP has already been issued (from the mainline
+# case statement), this just handles waiting until the
+# server eventually does shutdown, and restarting it then.
+#
+# Loop searching the ps list for a line containing the
+# scheduler startup command, excluding any line containing
+# the command and grep (as the one with grep is our search
+# command and we don't want to wait on that).
+# The loop will exit when the ps command no longer finds
+# a match on the running startup command.
+# This is required as in a normal scheduler schutdown it
+# will wait until the last job has finished running
+# before stopping.
+#
+# Then we loop until the tcpip port has been relinquished
+# by the OS, this doesn't always happen immediately the
+# server is shutdown (although the app socket flags have
+# now been tweaked to hurry this along).
+#
+# Then we start the server.
+# ----------------------------------------------------------
+restart() {
+   test=0
+   while [ ${test} -eq 0 ];
+   do
+      a=`ps -eo args | grep "${prod_run_cmd}" | grep -v "grep"`
+      echo "${a}"
+      if [ ".${a}" != "." ];
+      then
+         echo "Job scheduler daemon still running, waiting 2 minutes"
+      	 sleep 120
+      else
+        test=1
+      fi
+   done
+
+   # Now, as it may take a little while for tcpip to release the port,
+   # especially if clients are still connected to it, wait for the port
+   # to free up.
+   test=0
+   retry_count=0
+   while [ ${test} -eq 0 ];
+   do
+      a=`netstat -an | grep " ${prod_port_num}"`
+      if [ ".${a}" != "." ];
+      then
+         echo "netstat shows port ${prod_port_num} still in use, waiting 1 minute"
+	     echo "${a}"
+	     retry_count=$((${retry_count}+1))
+	     if [ ${retry_count} -gt ${max_tcpip_wait} ];
+	     then
+		     echo "Maximum wait period expired, restart scheduler manually"
+             logger "$0 : port ${prod_port_num} still in use after ${max_tcpip_wait} minutes, unable to start jobsched_daemon"
+		     exit 1;
+	     fi
+      	 sleep 60
+      else
+        test=1
+      fi
+   done
+
+   # start the server process again, it goes daemon when all is ok so we
+   # can safely wait for the status code to return.
+   ${prod_run_cmd}
+   a=$?
+   if [ "${a}." == "0." ];
+   then
+       logger "$0, Job Scheduler started OK"
+   else
+      if [ "${a}." == "2." ];
+      then
+         logger "$0, Job Scheduler tcp-ip port is already in use, retrying at 1 minute intervals"
+		 startquiet
+      else
+         logger "$0, Job Scheduler could not start, fatal errors, see log !"
+      fi
+   fi
+} # end of restart
+
+# ----------------------------------------------------------
+# If the server is not running, start it.
+# ----------------------------------------------------------
+start() {
+    a=`ps -eo args | grep "${prod_run_cmd}" | grep -v "grep"`
+    if [ ".${a}" != "." ];
+    then
+       echo "SCHEDULER IS ALREADY RUNNING, USE restart TO STOP/START"
+       echo "${a}"
+	else
+       if [ ! -d bin ];
+       then
+          logger "*ERROR* $0 configured incorrectly, no bin dir"
+          echo "*ERROR* $0 configured incorrectly, no bin dir"
+          exit 1
+       fi
+       if [ ! -d logs ];
+       then
+          mkdir logs
+          chmod 777 logs
+       fi
+       if [ ! -d joblogs ];
+       then
+          mkdir joblogs
+          chmod 777 joblogs
+       fi
+       if [ ! -d jobs ];
+       then
+          mkdir jobs
+          chmod 777 jobs
+       fi
+       # If no etc dir create it and initialise a default set
+       # of values for the environment variables for script use.
+       if [ ! -d etc ];
+       then
+          mkdir etc
+          chmod 755 etc
+       fi
+       if [ ! -f etc/shell_vars ];
+       then
+          echo "# Environment variables for script jobs" >> etc/shell_vars
+          echo "SCHED_BASE_DIR=${installed_dir}" >> etc/shell_vars
+          echo "SCHED_BIN_DIR=${installed_dir}/bin" >> etc/shell_vars
+          echo "SCHED_JOBLOG_DIR=${installed_dir}/joblogs" >> etc/shell_vars
+          mydir=
+       fi
+       restart
+   fi
+} # end of start
+
+# ----------------------------------------------------------
+# Check if the server is running, if it is get an internal
+# status display from it.
+# ----------------------------------------------------------
+status_server() {
+    a=`ps -eo args | grep "${prod_run_cmd}" | grep -v "grep"`
+    if [ ".${a}" != "." ];
+    then
+       echo "The server is running..."
+       echo "   ${a}"
+       echo "Server status..."
+       echo "SCHED STATUS" | ${sched_cmd_pgm}
+    else
+       echo "The server is not currently running"
+    fi
+}
+
+# ==========================================================
+# MAINLINE
+# 1) ALWAYS cd to the installation directory, the server
+#    is coded to expect directories under there.
+# 2) Then do the requested action.
+# ==========================================================
+# ALL ACTIONS ARE RELEATIVE TO THE INSTALLATION DIRECTORY
+if [ ! -d ${installed_dir} ];
+then
+   echo "*ERROR* $0 configured incorrectly"
+   echo "No directory ${installed_dir}"
+   exit 1
+fi
+cd ${installed_dir}
+
+# Lets see what we have been asked to do
+cd ${installed_dir}
+case "$1" in
+    start)
+		  start
+		  ;;
+    stop)
+		  stop 
+		  ;;
+    restart)
+          stop
+		  restart
+		  ;;
+    status)
+          status_server
+		  ;;
+    *)
+          echo "Syntax: $0 start | stop | restart | status"
+          exit 1
+		  ;;
+  esac
+  exit 0
+#
+#  ----------------------------- Script functions ---------------------------
+#  system_shutting_down  - sets the global $shutdown to 1 if we are called
+#                          going to a run level that indicates the entire
+#                          machine is shutting down.
+#  stop                  - calls system_shutting_down. 
+#                          if $shutdown is 0 does a normal scheduler shutdown,
+#                          if not will do a force shutdown command.
+#  startquiet            - if the server is not running will loop trying to
+#                          start it at one minute intervals until either the
+#                          server startup error is <> port in use, or the
+#                          max retries has been exceeded.
+#  restart               - waits until the server has shutdown (by checking
+#                          using the ps command), then waits until the tcpip
+#                          port seems to have been released (by checking
+#                          using the netstat command), then checks that the
+#                          required directories exist creating them if needed,
+#                          then tries to start the server. If the server
+#                          startup returne error 2 (tcpip port in use) it will
+#                          then call startquiet to retry at 1 minute intervals.
+#  start                 - checks to see if the server is running, if not will
+#                          call restart to do all the work.
+#  status_server         - checks to see if the server is running, and if so
+#                          issued a SCHED STATUS command to it, the output
+#                          to be displayed on the invokers terminal.
+#
+# Notes: we use the PS command to see if the server is running rather
+#        than using a PID file (obtained pid with $!) simply because
+#        when comppiled with a SUN compiler on Solaris there is no
+#        equivalent of the programatic daemon call so I had to start
+#        the scheduler using the commandline 'daemon jobsched_daemon'
+#        which alas returns the pid of the daemon command and was no 
+#        good in this script.
+#
+#  ----------------------------- USEAGE --------------------------
+#  start   - start the server
+#  stop    - stop the server, normally in a normal clean fasion
+#  restart - stop and restart the server
+#  status  - display the status of the server

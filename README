@@ -1,0 +1,119 @@
+Marks Job Scheduler
+===================
+Written just for my needs, which were job scheduling with jobs being
+able to be dependant upon other jobs and files arriving; with user
+roles so web interfaces couldn't do more damage than users should.
+
+This went live on my servers a long time ago, I put it into CVS 
+in 2001. The last real code change was in 2009 so it's stable.
+
+The primary interface is a 'fast fail' command line interface,
+meaning if you make a typo you get thrown out of it; thats deliberate
+as obviously the command line interface can be used in shell scripts
+and if there is a typo you do want to stop immediately, it is a pain
+for interactive use.
+
+It may not meet your needs. But these are the basic functions provided
+ * job management, queuing, dependency chains, etc
+   - the scheduler enforces a max of five simultaneous batch jobs
+     running to manage server load (you have the source, bump it
+     up if needed), waiting jobs will just queue and run when possible
+   - the scheduler can run jobs as any user defined at the unix OS
+     level (note: see security tips at the end of this file)
+   - jobs can be made dependant upon other jobs completing
+   - jobs can be made depentant upon files arriving on the system
+   - special NULL* job class that can only run when no other jobs are
+     running and all logs go to /dev/null (added so I can use the
+     scheduler to archive its own joblogs and ensure no log activity)
+   - all job output is piped to a file with the same name as the
+     job in a joblogs directory; your jobs can be as verbose as 
+     they want to be
+   - for badly behaved batch jobs that prompt for input, /dev/null
+     is provided as stdin for all jobs to ensure they don't hang
+     waiting for input (oops, I had a badly behaved job, so implemented
+     this)
+   - the scheduler can pass a date parameter to scripts identifying the 
+     date it was supposed to run on, usefull for catchup processing
+   - catchup : the scheduler can be configured to 'catch up' which
+     simply means if the scheduler is shutdown for a week when it
+     is restarted the entire weeks jobs will run (the scheduler 
+     ~DATE~ parm will pass the date they were supposed to run on
+     in that case (if you pass it as a parm to jobs of course)
+   - catchup overrides : individual jobs can be configured with catchup
+     on or off (default on). This means jobs that may delete old log
+     files can be set to override the global catchup flag and run
+     only once during the scheduler processing (no point in running
+     them more than once)
+   - catchup note : if the scheduler global option is set to catchup
+     off then of course no catchup processing will occur, but the
+     default is to catchup
+ * calendar functions, and job interval scheduling
+   - jobs can be run based on calendar dates
+   - those calendars can be overridden by holiday calendars
+   - jobs can be scheduled to run every N minutes
+   - or jobs will run once a day at the selected time
+   - calendars are year keyed, if you forget to add a calendar
+     for the next year after a year change a job display will
+     show the jobs that use the calendar name as in a calendar
+     error state until you add one.
+ * user roles
+   - has its own user database that assigns users to specific roles,
+     admin(god), operator(only active job control, no dbs access),
+     job(only job/calendar dbs access, no active job control),
+     security(only user add/delete, no other access; of course a
+     security user could grant themselves any access they want;
+     true in any environment however)
+   - autoauth : if a job scheduler userid is the same as a unix
+     OS level userid then if that user starts the command line
+     interface under their own unix userid 'on the local system'
+     they can autoauth up to their priviledge level without a
+     password (configurable on a per user basis with one exception).
+     The exception is root that can always autoauth to admin, not a
+     security risk as your root password is in a safe right :-) and
+     root must autoauth in the init.d scripts at server shutdown to
+     issue the shutdown commands to avoid coding the password in the
+     shutdown script.
+   - subset authority flag on user records, set at a per user basis.
+     If a user has subsetauth they can add other job scheduler users
+     with authorities below or up to the authority they have themselves.
+     So your team leaders can add new staff without bugging the admin.
+     Delete is still a security or admin role.
+ * job failure alerting, and newday alerting
+   - all alert conditions (both alert raise and alert clear) can be
+     forwarded to shell scripts so external monitoring tools are 
+     able to catch failures (and hopefully be smart enough to handle
+     the alert cancels as well)
+   - all failed jobs are places on an alert queue, and can be restarted
+     (which requires all your jobs are able to restart from the beginning)
+   - cutsomised alert messages can be configured based on the job exit 
+     code
+   = the scheduler works on a 'per-day' schedule, all jobs for
+     the current day must complete before the next days jobs are
+     scheduled on; if a day runs late (beyond the configurable
+     newday time) the scheduler will either alert and require
+     manual intervention or raise a warning alert that things
+     are late and just keep checking periodically resuming
+     when all jobs are completed (newday late action is configurable
+     between the two states)
+ * database consistency checking
+   - minimal, handles an uncontrolled shutdown. On scheduler startup
+     all (if any) jobs that were still running at the time the
+     scheduler were stopped are placed into failed/alert state and
+     manual intervention is required (correct handling, if it was a
+     power off they could be in any nasty state)
+   - when the newday job runs a minimal database compress is done,
+     just to get rid of deleted entries; if you don't delete a 
+     lot of jobs or users it won't make a difference to you, other
+     than at year rollover old calendars are deleted also so you
+     don't have to manually do it
+ * security tips (as mentioned above)
+   - as the job scheduler can run jobs under any unix OS level userid
+     a program is provided to scan the job database and check every
+     script executed to make sure it is owned by the correct unix
+     userid and only updateable by the correct unix userid (personally
+     I have a script that does the same thing for cron jobs as well,
+     amazing the number of 'root' cron job scripts that can be updated
+     by anybody)
+   - the same program reports on inactive job scheduler userids
+
+REFER TO THE INSTALLING FILE ON HOW TO INSTALL THE APPLICATION
