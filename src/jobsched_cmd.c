@@ -156,8 +156,8 @@ void help_request_interface( char * sHelpRequest ) {
       printf("SCHED SHOWSESSIONS\n");
       printf("SCHED DELETE <jobname> (*** READ THE MANUAL FIRST ***)\n");
       printf("SCHED RUNNOW <jobname> (*** READ THE MANUAL FIRST ***)\n");
-	  printf("\nAlso on recipt of a new license key you may use\n");
-      printf("SCHED LICENSE COMPANY <name>,SERVERNAME <name>,EXPIRES <yyyymmdd>,KEY <hex>\n");
+      printf("SCHED NEWDAYTIME HH:MM\n");
+      printf("SCHED LOGLEVEL INFO|WARN|ERROR (caution:info is very verbose)\n");
    }
    else if (memcmp(ptr,"USER",4) == 0) {
       printf("Users are managed by Security authority users or Administrators.\n" );
@@ -1797,105 +1797,6 @@ int calendar_command( char *cmdstring, API_Header_Def *pAPI_buffer ) {
 
 /* -----------------------------------------------------------------------------
 
-    L i c e n s e     C o m m a n d     P r o c e s s i n g     R o u t i n e s
-
-   ----------------------------------------------------------------------------- */
-
-/* *****************************************************************************
- * return 0 if error 
-   ***************************************************************************** */
-int sched_build_license_request( API_Header_Def * pApi_buffer, char *licstring ) {
-   /* -- SCHED LICENSE COMPANY <company>,SERVERNAME <hostname>,EXPIRES
-	* <yyyymmdd>,KEY <licensecode> */
-
-   char sTestParmName[100];
-   char sTestParmValue[150];          
-   int nFieldLen, nLeadingPads, nOverrunFlag, endofdata;
-   char *pSptr;
-   api_license_data_def * license_data;
-          
-   pSptr = licstring;
-   license_data = (api_license_data_def *)&pApi_buffer->API_Data_Buffer;
-		           
-   /* set a default here ! */
-
-   /* loop until we reach the end of the command string passed */
-   endofdata = 0;
-   while (endofdata == 0) {
-      /* --- find the field type --- */
-      nFieldLen = UTILS_parse_string( pSptr, ' ', (char *)&sTestParmName, 99,
-                                      &nLeadingPads, &nOverrunFlag );
-      if (nFieldLen == 0) {
-         endofdata = 1;
-      }
-      else {
-         pSptr = pSptr + nFieldLen + nLeadingPads + nOverrunFlag;
-      }
-	  if (endofdata == 0) {
-          /* --- find the field data --- */
-          /* fields are up until the next comma */
-          pSptr = pSptr + UTILS_count_delims( pSptr, ' ' );
-          nFieldLen = UTILS_parse_string( pSptr, ',', (char *)&sTestParmValue, 99,
-                                          &nLeadingPads, &nOverrunFlag );
-          if (nFieldLen == 0) {
-             printf( "*E* Missing parameter value for field %s (stringleft=%s)\n", sTestParmName, pSptr );
-             return( 0 );
-          }
-          else {
-             /* skip over the data we found */
-             pSptr = pSptr + nFieldLen + nLeadingPads + nOverrunFlag;
-             pSptr = pSptr + UTILS_count_delims( pSptr, ',' );
-
-		     /* check the data we saved */
-             if (memcmp(sTestParmName, "COMPANY", 7) == 0) {
-                strncpy( license_data->company, sTestParmValue, 50 );
-             }
-		     else if (memcmp(sTestParmName, "SERVERNAME", 10) == 0) {
-                strncpy( license_data->servername, sTestParmValue, 99 );
-		     }
-		     else if (memcmp(sTestParmName, "EXPIRES", 7) == 0) {
-                strncpy( license_data->expires, sTestParmValue, 8 );
-		     }
-		     else if (memcmp(sTestParmName, "KEY", 3) == 0) {
-                strncpy( license_data->license_key, sTestParmValue, 40 );
-		     }
-	      } /* else parm found */
-	  }  /* IF NOT EOF */
-   } /* while not end of data */
-
-   /* Check that we got all the variables we needed */
-   if ( (strlen(license_data->company) == 0) ||
-        (strlen(license_data->servername) == 0) ||
-        (strlen(license_data->expires) == 0) ||
-        (strlen(license_data->license_key) == 0) 
-	  )
-   {
-		   printf( "*E* One or more required fields missing\n" );
-		   printf( "*E* Syntax: SCHED LICENSE COMPANY <name>,SERVERNAME <name>,EXPIRES <yyyymmdd>,KEY <hex>\n" );
-		   return( 0 );
-   }
-   if (!(UTILS_legal_date_yyyymmdd((char *)&license_data->expires))) {
-		   printf( "*E* Provided expity date is not legal (%s)\n", license_data->expires );
-		   return( 0 );
-   }
-
-   /* FREE RELEASE: Force an expiry date and key */
-   strcpy( license_data->expires, "20361201" );
-   strcpy( license_data->license_key, "FREE-TEST-KEY 0102030405FFFF" );
-   printf( "*W* Warning, expiry and license key cannot be changed in the FREE release,\n" );
-   printf( "    Resetting the license expiry and key to the defaults. This version will\n" );
-   printf( "    allow the servername and company to be changed so this request will\n" );
-   printf( "    be passed to the server.\n" );
-
-   /* Set the API data len, as the caller expects this to be done */
-   API_set_datalen( pApi_buffer, sizeof(api_license_data_def) );
-
-   /* Return all OK, so the caller will pass it to the serevr */
-   return( 1 );
-} /* sched_build_license_request */
-
-/* -----------------------------------------------------------------------------
-
     S c h e d u l e r   C o m m a n d     P r o c e s s i n g     R o u t i n e s
 
    ----------------------------------------------------------------------------- */
@@ -1911,8 +1812,7 @@ int sched_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
    pSptr = cmdstring;
    nStatus = 1;
 
-   if ( (memcmp(cmdstring,"SCHED LICENSE",13) != 0) &&  /* not a case sensitive license command */
-        (memcmp(cmdstring,"SCHED ALERT FORWARDING",22) != 0) ) { /* or a forwarding command */
+   if (memcmp(cmdstring,"SCHED ALERT FORWARDING",22) != 0) { /* no case sensitive parms */
        UTILS_uppercase_string( cmdstring );          /* so uppercase the whole string now    */
    }
 
@@ -2055,12 +1955,6 @@ int sched_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
          nStatus = 0;
 	  }
    }
-   else if (memcmp(cmdstring,"SCHED LICENSE",13) == 0) {
-      strcpy( pApi_buffer->API_System_Name, "CONFG" );
-      pSptr = pSptr + 13;
-      strcpy( pApi_buffer->API_Command_Number, API_CMD_LICENSE );
-      nStatus = sched_build_license_request( pApi_buffer, pSptr );
-   }
    else if (memcmp(cmdstring,"SCHED CATCHUP",13) == 0) {
       strcpy( pApi_buffer->API_System_Name, "CONFG" );
       pSptr = pSptr + 13;
@@ -2149,7 +2043,7 @@ int sched_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
       printf( "*E* That SCHED command (%s) is not supported yet\n", cmdstring );
 	  printf( "    Options are : LISTALL, STATUS [SHORT], RUNNOW <jobname>, DELETE <jobname>, SHUTDOWN\n" );
 	  printf( "                  LOGLEVEL INFO | WARN | ERR, NEWDAYPAUSEACTION ALERT | DEPWAIT,\n" );
-	  printf( "                  NEWDAYTIME hh:mm, SHOWSESSIONS, EXECJOBS ON|OFF, LICENSE <parms>\n" );
+	  printf( "                  NEWDAYTIME hh:mm, SHOWSESSIONS, EXECJOBS ON|OFF\n" );
 	  printf( "                  HOLD-ON, HOLD-OFF or FULLDETAILS ON | OFF\n" );
 	  printf( "    There are also alert forwarding configuration commands,\n    refer to the manual before using.\n" );
       nStatus = 0;
@@ -2894,7 +2788,7 @@ int build_request_buffer( char *pCmdstring, API_Header_Def *pApibuffer ) {
       nStatus = calendar_command( pCmdstring, pApibuffer );
    }
    else if (memcmp(pCmdstring,"SCHED",5) == 0) {    /* scheduler core activity */
-      /* MUST REMAIN Mixed Case data (for the license and execprogs). */
+      /* MUST REMAIN Mixed Case data (for the execprogs). */
       nStatus = sched_command( pCmdstring, pApibuffer );
    }
    else if (memcmp(pCmdstring,"ALERT",5) == 0) {    /* alert */
@@ -2921,7 +2815,7 @@ int build_request_buffer( char *pCmdstring, API_Header_Def *pApibuffer ) {
    else if ( (memcmp(pCmdstring,"LOGON",5) == 0) ||     /* logon based on user/password request */
              (memcmp(pCmdstring,"LOGIN",5) == 0) )      /* logon based on user/password request */
    {
-      /* MUST REMAIN Mixed Case data (for the license). */
+      /* MUST REMAIN Mixed Case data (for the logon). */
 	  nStatus = logon_command( pApibuffer, pCmdstring );
    }
    else if ( (memcmp(pCmdstring,"LOGOFF",6) == 0) ||    /* logoff, reset to guest */

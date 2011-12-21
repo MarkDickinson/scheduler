@@ -927,9 +927,7 @@ void SERVER_Open_All_Files( void ) {
     * all of the files each library is in charge of.
     */
    if (CONFIG_Initialise( (internal_flags *) &pSCHEDULER_CONFIG_FLAGS ) == 0) {
-      myprintf(  "WARN: SW011-Job Scheduler is not licensed for this system.\n" );
-      myprintf(  "WARN: SW011-Please check your license keys.\n\n" );
-      myprintf(  "WARN: SW011-Server initialisation continuing but JOBS WILL NOT RUN until license is corrected.\n" );
+      myprintf(  "WARN: SW011-Programmer missed removing a license check somewhere, continuing.\n" );
    }
 
    /* Record the log level we will be using */
@@ -2015,7 +2013,7 @@ void process_client_request_sched( FILE *tx, char *buffer, int *shutdown_flag, i
   
    /* Normal command processing now */
    
-   /* show the scheduler status flags and license info */
+   /* show the scheduler status flags */
    if (memcmp(api_bufptr->API_Command_Number, API_CMD_STATUS, API_CMD_LEN) == 0) {
        if (memcmp(api_bufptr->API_Data_Buffer,"ALERTINFO",9) == 0) {
           SCHED_display_server_status_alertsonly( api_bufptr, (internal_flags *)&pSCHEDULER_CONFIG_FLAGS, tx, (int)INTERNAL_count_executing() );
@@ -2222,7 +2220,6 @@ void process_client_request_config( FILE *tx, char *buffer, int connect_index ) 
    char smallbuf[10];
    API_Header_Def * api_bufptr;
    job_header_def * job_header;
-   api_license_data_def * license_data;
    time_t time_now;
    time_t test_time;
    char *ptr, *ptr2;
@@ -2352,39 +2349,6 @@ void process_client_request_config( FILE *tx, char *buffer, int connect_index ) 
                    strcpy( api_bufptr->API_System_Name, "CONFG" );
 	               strcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR );
 				   strcpy( api_bufptr->API_Data_Buffer, "*E* Command rejected, server will only accept ALERT or DEPWAIT for this request\n" );
-		   }
-   }
-
-   /* Update the license key information */
-   else if (memcmp(api_bufptr->API_Command_Number, API_CMD_LICENSE, API_CMD_LEN) == 0) {
-		   license_data = (api_license_data_def *)&api_bufptr->API_Data_Buffer;
-		   strncpy( pSCHEDULER_CONFIG_FLAGS.company_name, license_data->company, 50 );
-		   strncpy( pSCHEDULER_CONFIG_FLAGS.servername, license_data->servername, 99 );
-		   strncpy( pSCHEDULER_CONFIG_FLAGS.expires_on, license_data->expires, 8 );
-		   strncpy( pSCHEDULER_CONFIG_FLAGS.license_key, license_data->license_key, 40 );
-           API_init_buffer( (API_Header_Def *)api_bufptr ); 
-           strcpy( api_bufptr->API_System_Name, "CONFG" );
-           if (CONFIG_check_license((internal_flags *)&pSCHEDULER_CONFIG_FLAGS) != 1) {
-				   /* License failed, discard the new one */
-                   z = CONFIG_Initialise( (internal_flags *)&pSCHEDULER_CONFIG_FLAGS );
-				   myprintf(  "*ERR:SE063-NEW LICENSE REQUEST FAILED CHECKS, LICENSE REJECTED\n" );
-                   strcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR );
-                   strcpy( api_bufptr->API_Data_Buffer, "*ERR: NEW LICENSE REQUEST FAILED CHECKS, LICENSE REJECTED\n" );
-		   }
-		   else {
-				   /* License OK, add it */
-                   myprintf(  "AUTH:SI064-License key changed by %s\n", client[connect_index].user_name );
-				   if ( CONFIG_update( (internal_flags *)&pSCHEDULER_CONFIG_FLAGS ) == 1 ) {
-                      strcpy( api_bufptr->API_Command_Response, API_RESPONSE_DISPLAY );
-                      strcpy( api_bufptr->API_Data_Buffer, "LICENSE UPDATE REQUEST PROCESSED BY SERVER\n" );
-					  if (pSCHEDULER_CONFIG_FLAGS.log_level > 1 ) {
-					     myprintf(  "INFO:SI065-Licence key details have been updated\n" );
-					  }
-				   }
-				   else {
-                      strcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR );
-                      strcpy( api_bufptr->API_Data_Buffer, "SERVER IO ERROR ON CONFIGURATION FILE, NO CHANGE MADE, CHECK LOGS\n" );
-				   }
 		   }
    }
 
@@ -3311,10 +3275,9 @@ int main (int argc, char **argv, char **envp) {
    int reuse_addr;
 
    /* to throttle job queuing messages */
-   int queue_message_written, jobspawn_status, disabled_message_written, license_message_count;
+   int queue_message_written, jobspawn_status, disabled_message_written;
    queue_message_written = 0;
    disabled_message_written = 0;
-   license_message_count = 0;
 
    /* Before anything else, initialise the memory library */
    MEMORY_initialise_malloc_counters();
@@ -3487,66 +3450,61 @@ int main (int argc, char **argv, char **envp) {
       if ( n == -1 ) {
          die( "select()", DIE_TCPIP_SETUP );
       }
-
-	  /* ---------------------------------------------------------------------
-	   *  Our 1.3 second timer expired without any activity.
-	   *  We use this inactivity trigger to check the scheduler activity tasks
-	   *  to see if there is anything we need to do; run jobs, start newday
-	   *  etc.
-	   * ----------------------------------------------------------------------*/
+      /* -ELSE----------------------------------------------------------------
+       *  Our 1.3 second timer expired without any activity.
+       *  We use this inactivity trigger to check the scheduler activity tasks
+       *  to see if there is anything we need to do; run jobs, start newday
+       *  etc.
+       * ----------------------------------------------------------------------*/
       else if ( !n ) {
          /* --- timer expired, check scheduler stuff */
          if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_TIMERS) {
             myprintf(  "DEBUG: Timer expired, checking scheduler work\n" ); 
-		 }
-		 /* --- FIRST (new) see if we are pending a shutdown, and if we can */
+         }
+         /* --- FIRST (new) see if we are pending a shutdown, and if we can */
          if ( (shutdown_flag == 1) && (INTERNAL_count_executing() == 0) ) {
-				 /* Now done in shutdown 
-               shutdown(listen_sock,SHUT_RDWR);
-               close( listen_sock );
-			   */
-			   if (pSCHEDULER_CONFIG_FLAGS.log_level > 0) {
-			      myprintf(  "WARN:SW035-SHUTDOWN NOW POSSIBLE, Server is now no longer acception connections...\n" );
-			   }
-               shutdown_immed();
+            if (pSCHEDULER_CONFIG_FLAGS.log_level > 0) {
+                myprintf(  "WARN:SW035-SHUTDOWN NOW POSSIBLE, Server is now no longer acception connections...\n" );
+            }
+            shutdown_immed();
          }
 
-        /* --- first print any message saved first */
-        UTILS_print_last_message();
-        /* --- see if any child jobs have completed */
-        if (running_job_table.number_of_jobs_running > 0) {
-            if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_TIMERS) {
-               myprintf(  "DEBUG: Checking if any running jobs have completed.\n" ); 
+         /* --- first print any message saved first */
+         UTILS_print_last_message();
+         /* --- see if any child jobs have completed */
+         if (running_job_table.number_of_jobs_running > 0) {
+             if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_TIMERS) {
+                myprintf(  "DEBUG: Checking if any running jobs have completed.\n" ); 
+             }
+             completed_job_pid = waitpid( -1, (int *)&status_flag, WNOHANG || WUNTRACED );
+             if (completed_job_pid > 0) {
+                 /* check to see if it was an alert we can discard */
+                 if (clean_up_alert_table( (pid_t *)&completed_job_pid ) == 0) { /* it wasn't */
+                     /* else a child job has completed, free up the running job table
+                      * entry for it */
+                     clean_up_job_entry_table( (pid_t *)&completed_job_pid, status_flag );
+                  }
+             }
+         }
+         /*
+          * If the newday has just run it will want us to reset the memory
+          * counters in the memory library, check for that (needed to be done
+          * from the mainline to ensure the stack is (should be) empty.
+         */
+         /* --- See if the server recheck flag has been set for anything, this may
+          * be something simple like a manual recheck request, or pherhaps a
+          * new job submitted etc., but we do a recheck if set. */
+         if (SCHED_init_required != 0) {
+            /* this check is here as the newday triggers a sched_init, and we do not
+               want to do this check every loop but only when a newday runs, so the
+               minimises the overhead a litte. May need to revisit if ever need to
+               reset anywhere but from the newday job.
+               Note: also requested by the server startup.
+            */
+            if (SCHED_init_memcounters_required > 0) { /* do we need to clear the memory counters,
+                                                          currently only requested by the newday job. */
+                MEMORY_reset_counters_on_newday();
             }
-            completed_job_pid = waitpid( -1, (int *)&status_flag, WNOHANG || WUNTRACED );
-            if (completed_job_pid > 0) {
-                /* check to see if it was an alert we can discard */
-                if (clean_up_alert_table( (pid_t *)&completed_job_pid ) == 0) { /* it wasn't */
-                    /* else a child job has completed, free up the running job table
-                     * entry for it */
-                    clean_up_job_entry_table( (pid_t *)&completed_job_pid, status_flag );
-                 }
-            }
-        }
-        /*
-         * If the newday has just run it will want us to reset the memory
-         * counters in the memory library, check for that (needed to be done
-         * from the mainline to ensure the stack is (should be) empty.
-        */
-        /* --- See if the server recheck flag has been set for anything, this may
-         * be something simple like a manual recheck request, or pherhaps a
-         * new job submitted etc., but we do a recheck if set. */
-        if (SCHED_init_required != 0) {
-           /* this check is here as the newday triggers a sched_init, and we do not
-              want to do this check every loop but only when a newday runs, so the
-              minimises the overhead a litte. May need to revisit if ever need to
-              reset anywhere but from the newday job.
-              Note: also requested by the server startup.
-           */
-           if (SCHED_init_memcounters_required > 0) { /* do we need to clear the memory counters,
-                                                         currently only requested by the newday job. */
-               MEMORY_reset_counters_on_newday();
-           }
             if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_VARS) {
                myprintf(  "DEBUG: Server scheduling order recheck requested.\n" ); 
             }
@@ -3556,114 +3514,98 @@ int main (int argc, char **argv, char **envp) {
             SCHED_init_required = 0;
             job_status = SCHED_ACTIVE_get_next_jobtorun( &next_job_to_run );
             if (job_status == 0) {
-                    if (pSCHEDULER_CONFIG_FLAGS.log_level > 1) {
-                       myprintf( "INFO:SI077-There are no jobs available to run at present.\n" );
-                    }
+               if (pSCHEDULER_CONFIG_FLAGS.log_level > 1) {
+                  myprintf( "INFO:SI077-There are no jobs available to run at present.\n" );
+               }
                UTILS_zero_fill((char *)&next_job_to_run.next_scheduled_runtime, JOB_DATETIME_LEN );
                UTILS_zero_fill((char *)&next_job_to_run.job_header.jobname, JOB_NAME_LEN);
                UTILS_zero_fill((char *)&next_job_to_run.job_header.jobnumber, JOB_NUMBER_LEN );
-                                next_job_to_run.run_timestamp = 0;
+               next_job_to_run.run_timestamp = 0;
             }
-			else if (job_status == 1) {
-/*					myprintf( "INFO:SI078-Next job to be run has been selected from the queue\n" ); */
-			}
-			else {
-					myprintf( "*ERR:SE069-error finding next job to run, job processing suspended until error is corrected\n" );
-					UTILS_zero_fill((char *)&next_job_to_run.next_scheduled_runtime, JOB_DATETIME_LEN );
-					UTILS_zero_fill((char *)&next_job_to_run.job_header.jobname, JOB_NAME_LEN);
-					UTILS_zero_fill((char *)&next_job_to_run.job_header.jobnumber, JOB_NUMBER_LEN );
-					next_job_to_run.run_timestamp = 0;
-			}
-		 }
-		 /* --- Check to see if any jobs are to be run now */
+            else if (job_status == 1) {
+               /*myprintf( "INFO:SI078-Next job to be run has been selected from the queue\n" ); */
+            }
+            else {
+               myprintf( "*ERR:SE069-error finding next job to run, job processing suspended until error is corrected\n" );
+               UTILS_zero_fill((char *)&next_job_to_run.next_scheduled_runtime, JOB_DATETIME_LEN );
+               UTILS_zero_fill((char *)&next_job_to_run.job_header.jobname, JOB_NAME_LEN);
+               UTILS_zero_fill((char *)&next_job_to_run.job_header.jobnumber, JOB_NUMBER_LEN );
+               next_job_to_run.run_timestamp = 0;
+            }
+         }  /* end if sched init required */
+         /* --- Check to see if any jobs are to be run now */
          if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_TIMERS) {
-		    myprintf(  "DEBUG: Starting next job to run timestamp check\n" );
-		 }
+            myprintf(  "DEBUG: Starting next job to run timestamp check\n" );
+         }
          if ( (pSCHEDULER_CONFIG_FLAGS.enabled == '1') && (shutdown_flag == 0) ) { 
-		    if (next_job_to_run.run_timestamp != 0) {
-				 if ( next_job_to_run.run_timestamp <= UTILS_timenow_timestamp() ) {
-					 if ( (pSCHEDULER_CONFIG_FLAGS.licensed_to_run == '1') &&
-					      (pSCHEDULER_CONFIG_FLAGS.enabled == '1') ) {
-                         if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_VARS) {
-								 myprintf(  "DEBUG: Now ready to run job %s\n",
-										 next_job_to_run.job_header.jobname );
-						 }
-						 if (memcmp(next_job_to_run.job_header.jobname,"SCHEDULER",9) == 0) { /* internal task */
-								 SERVER_spawnsimulate_task( &next_job_to_run );
-						 }
-						 else if (  (jobspawn_status = SCHED_spawn_job( &next_job_to_run )) != 1 ) {
-                             if (jobspawn_status == 2) {
-                                 if (queue_message_written == 0) {
-									 myprintf(  "WARN:SW036-Maximum jobs running, jobs queueing, examine schedule and try to spread out jobs\n" );
-									 myprintf(  "WARN:SW037-Maximum of %d simultaneous jobs has been reached\n",
-											 MAX_RUNNING_JOBS );
-									 myprintf(  "WARN:SW038-The job trying to run has been requeued and will run next.\n" );
-									 queue_message_written = 1;
-								 }
-							 }
-							 else {
-								 myprintf(  "*ERR:SE070-job %s failed to run, job processing suspended until problem corrected !\n",
-									  next_job_to_run.job_header.jobname );
-								 /* TODO - generate a generic system alert */
-								 pSCHEDULER_CONFIG_FLAGS.enabled = '0';
-							 }
-						 }
-						 else {
-								 /* we need a new job to queue on */
-                                 if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_VARS) {
-                                    myprintf(  "DEBUG: Setting SCHED_init_required = 0 (main), job spawned, need new one\n" ); 
-                                 }
-								 SCHED_init_required = 1;
-								 queue_message_written = 0;
-								 disabled_message_written = 0;
-						 }
-					 }
-					 else {
-					    if (pSCHEDULER_CONFIG_FLAGS.licensed_to_run != '1') {
-                           if (license_message_count == 0) {
-						 	  myprintf(  "WARN:SW039-JOBS QUEUED TO RUN CANNOT RUN, LICENSE HAS EXPIRED\n" );
-							  license_message_count++;
-						   }
-						   else {
-                              /* repeat every five minutes */
-                              license_message_count++;
-							  if (license_message_count > 300) { license_message_count = 0; }
-						   }
-						}
-						else {
-                            if (disabled_message_written == 0) {
-						   	   myprintf(  "WARN:SW040-JOBS ARE READY TO RUN BUT ARE QUEUEING as SCHEDULER EXECJOBS OFF is set\n" );
-							   disabled_message_written = 1;
-							}
-						}
-					 }
-				 }
-		    } /* if timestamp of next job <> 0 */
-		 } /* if pSCHEDULER_CONFIG_FLAGS.enabled == 1 */
-		 /* --- every 5 minutes aproximately check to see if a file we are
-		  * waiting on has appeared. */
-		 file_check_counter++;
-         if (file_check_counter > 290) { /* is we havn't done a check in five minutes, do one */
-				 SCHED_DEPEND_delete_all_relying_on_files();
-				 file_check_counter = 0;
-		 }
-		 /* --- see if we need to roll over the current logfile yet --- */
-         if ( logfile_roll_time <= UTILS_timenow_timestamp() ) {
-				 SERVER_roll_log_files();
-		 }
-		 /* --- last but not least, see if there are any internal system tasks
-		  * we need to do, such as the newday scheduling. 
-		  * At this point I am doing that by submitting a SCHEDULER-NEWDAY job
-		  * at server startup, so no additional checks are needed here. This
-		  * may be revisited later. */ 
-		 /* and we are finally done with internal checks */
-         continue;
-      }
+            if (next_job_to_run.run_timestamp != 0) {
+               if ( next_job_to_run.run_timestamp <= UTILS_timenow_timestamp() ) {
+                  if (pSCHEDULER_CONFIG_FLAGS.enabled == '1') {
+                      if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_VARS) {
+                         myprintf(  "DEBUG: Now ready to run job %s\n", next_job_to_run.job_header.jobname );
+                      }
+                      if (memcmp(next_job_to_run.job_header.jobname,"SCHEDULER",9) == 0) { /* internal task */
+                         SERVER_spawnsimulate_task( &next_job_to_run );
+                      }
+                      else if (  (jobspawn_status = SCHED_spawn_job( &next_job_to_run )) != 1 ) {
+                         if (jobspawn_status == 2) {
+                            if (queue_message_written == 0) {
+                               myprintf(  "WARN:SW036-Maximum jobs running, jobs queueing, examine schedule and try to spread out jobs\n" );
+                               myprintf(  "WARN:SW037-Maximum of %d simultaneous jobs has been reached\n", MAX_RUNNING_JOBS );
+                               myprintf(  "WARN:SW038-The job trying to run has been requeued and will run next.\n" );
+                               queue_message_written = 1;
+                            }
+                      }
+                      else {
+                         myprintf(  "*ERR:SE070-job %s failed to run, job processing suspended until problem corrected !\n",
+                         next_job_to_run.job_header.jobname );
+                         /* TODO - generate a generic system alert */
+                         pSCHEDULER_CONFIG_FLAGS.enabled = '0';
+                      }
+                   }
+                   else {
+                      /* we need a new job to queue on */
+                      if (pSCHEDULER_CONFIG_FLAGS.debug_level.server >= DEBUG_LEVEL_VARS) {
+                         myprintf(  "DEBUG: Setting SCHED_init_required = 0 (main), job spawned, need new one\n" ); 
+                      }
+                      SCHED_init_required = 1;
+                      queue_message_written = 0;
+                      disabled_message_written = 0;
+                   }
+                }
+                else {
+                   if (disabled_message_written == 0) {
+                      myprintf(  "WARN:SW040-JOBS ARE READY TO RUN BUT ARE QUEUEING as SCHEDULER EXECJOBS OFF is set\n" );
+                      disabled_message_written = 1;
+                   }
+                }
+             }
+          } /* if timestamp of next job <> 0 */
+       } /* if pSCHEDULER_CONFIG_FLAGS.enabled == 1 */
+       /* --- every 5 minutes aproximately check to see if a file we are
+       * waiting on has appeared. */
+       file_check_counter++;
+       if (file_check_counter > 290) { /* is we havn't done a check in five minutes, do one */
+          SCHED_DEPEND_delete_all_relying_on_files();
+          file_check_counter = 0;
+       }
+       /* --- see if we need to roll over the current logfile yet --- */
+       if ( logfile_roll_time <= UTILS_timenow_timestamp() ) {
+          SERVER_roll_log_files();
+       }
+       /* --- last but not least, see if there are any internal system tasks
+        * we need to do, such as the newday scheduling. 
+        * At this point I am doing that by submitting a SCHEDULER-NEWDAY job
+        * at server startup, so no additional checks are needed here. This
+        * may be revisited later. */ 
+       /* and we are finally done with internal checks */
+       continue;
+    }
 
-	  /* -------------------------------------------------------------------
-	   * We will always check to see if any new clients are trying to connect.
-	   * ------------------------------------------------------------------- */
-      /* check if a connect has occurred */
+    /* -------------------------------------------------------------------
+     * We will always check to see if any new clients are trying to connect.
+     * ------------------------------------------------------------------- */
+     /* check if a connect has occurred */
       if ( FD_ISSET( listen_sock, &work_set ) ) {
          /* wait for a connect */
          connect_addr_len = sizeof connect_addr;

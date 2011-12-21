@@ -16,9 +16,18 @@ Change Type Key: (S) Security change
                  (N) New program included
 
 
+Fixes Since V1.14
+-----------------
+Version V1.14 is this release.
+
 Fixes Since V1.13
 -----------------
-Version V1.13 is this release.
+2011/12/21 - (I) Removed all code blocks managing licensing, basically a cleanup
+                 of no longer required code as licensing was never implemented and
+                 its free gplv2 now anyway. MANUALS HAVE NOT BEEN UPDATED.
+             (I) Added newdaytime and loglevel options to the jobsched_cmd
+                 help sched display; function was alsways there but not in
+                 the display
 2011/04/05 - (I) Updated text shown to user when starting jobsched_cmd to show
                  GPL V2 release instead of just GPL release.
 

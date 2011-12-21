@@ -34,20 +34,15 @@
 
    typedef struct {
       char  version[41];      /* Version info */
-	  char  servername[100];  /* Server name */
-      char  company_name[51]; /* Licensed to */
-      char  license_key[41];  /* License Key */
-      char  expires_on[9];    /* License Key expiry date yyyymmdd */
       char  catchup_flag;     /* '0' = none, '2' = run for every missed day */
       int   log_level;        /* 0 = error, 1 = error/warn, 2=error/warn/info, 9 = all+trace */
       char  new_day_time[6];  /* hh:mm */
       char  last_new_day_run[18]; /* = JOB_DATETIME_LEN + 1, len used by UTILS_timestamp routines */
       char  next_new_day_run[18]; /* = JOB_DATETIME_LEN + 1, len used by UTILS_timestamp routines */
-      char  licensed_to_run;  /* license test '0' = no jobs will be allowed run, '1' = ok */
       char  enabled;          /* user control '0' = scheduler paused, '1' = jobs can run, '2' = shutdown queued */
-	  char  newday_action;    /* raise alert = '0', add waiton job entry = '1' */
-	  debug_level_def debug_level; /* trace levels from 0 = none thru 9 = all */
-	  int   isdst_flag;       /* is daylight savings time in effect; set from localtime calls */
+      char  newday_action;    /* raise alert = '0', add waiton job entry = '1' */
+      debug_level_def debug_level; /* trace levels from 0 = none thru 9 = all */
+      int   isdst_flag;       /* is daylight savings time in effect; set from localtime calls */
   /* Implemented forexternal alert generation */
       char  use_central_alert_console;    /* Y = yes, N = no, E = execprog */
       int   central_alert_console_active; /* 0=no, 1=we copy alerts to a remote location (0 means its down) */
@@ -73,7 +68,6 @@ internal_flags pSCHEDULER_CONFIG_FLAGS; /* config flags */
 
 int CONFIG_Initialise( internal_flags * flagbuffer );
 int CONFIG_update( internal_flags * flagbuffer );
-int CONFIG_check_license( internal_flags * flagbuffer );
 int CONFIG_check_dst_flag( void );
 
 #endif

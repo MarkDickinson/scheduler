@@ -1951,9 +1951,6 @@ void SCHED_display_server_status( API_Header_Def * pApi_buffer, internal_flags *
   Server Version :
   Company Name   :
 
-  Licence Key :
-  Expires On :             Licensed to run :
-
   Server is Enabled/Disabled
 
   Log Level :              Trace Level : 
@@ -2000,27 +1997,7 @@ void SCHED_display_server_status( API_Header_Def * pApi_buffer, internal_flags *
   strcpy(local_buffer, "Job Scheduler Server, by Mark Dickinson 2001-2011 (GPLV2 Release)\n" );
   junk = API_add_to_api_databuf( pApi_buffer, local_buffer, strlen(local_buffer), tx );
 
-  datalen = snprintf( local_buffer, (MAX_API_DATA_LEN - 1), "Host name      : %s\n", GLOBAL_flags->servername );
-  junk = API_add_to_api_databuf( pApi_buffer, local_buffer, datalen, tx );
   datalen = snprintf( local_buffer, (MAX_API_DATA_LEN - 1), "Server Version : %s\n", GLOBAL_flags->version );
-  junk = API_add_to_api_databuf( pApi_buffer, local_buffer, datalen, tx );
-
-  datalen = snprintf( local_buffer, (MAX_API_DATA_LEN - 1), "Company Name   : %s\n", GLOBAL_flags->company_name );
-  junk = API_add_to_api_databuf( pApi_buffer, local_buffer, datalen, tx );
-
-  datalen = snprintf( local_buffer, (MAX_API_DATA_LEN - 1), "License Key    : %s\n", GLOBAL_flags->license_key );
-  junk = API_add_to_api_databuf( pApi_buffer, local_buffer, datalen, tx );
-
-  datalen = snprintf( local_buffer, (MAX_API_DATA_LEN - 1), "Expires on     : %s          Licensed to run : ",
-                     GLOBAL_flags->expires_on );
-  junk = API_add_to_api_databuf( pApi_buffer, local_buffer, datalen, tx );
-
-  if (GLOBAL_flags->licensed_to_run == '1') {
-     datalen = snprintf( local_buffer, 5, "YES\n" );
-  }
-  else {
-     datalen = snprintf( local_buffer, 5, "NO\n" );
-  }
   junk = API_add_to_api_databuf( pApi_buffer, local_buffer, datalen, tx );
 
   if (GLOBAL_flags->enabled == '1') {
@@ -2259,8 +2236,8 @@ Host Name <hostname>, Server is Enabled/Disabled/Shutting Down, nnn running jobs
   if (GLOBAL_flags->enabled == '1') { strncpy( serverstatus, "ENABLED (running jobs)", 59 ); }
   else if (GLOBAL_flags->enabled == '2') { strncpy( serverstatus, "DISABLED : SHUTDOWN REQUEST QUEUED", 59 ); }
   else { strncpy( serverstatus, "DISABLED (intervention required)", 59 ); }
-  datalen = snprintf( localbuffer, 127, "Host name %s, Server is %s\n%d jobs (non-system jobs) queued or running, %d in alert hold\n",
-                     GLOBAL_flags->servername, serverstatus, SCHED_count_active(), ALERTS_count_alerts() );
+  datalen = snprintf( localbuffer, 127, "Server is %s\n%d jobs (non-system jobs) queued or running, %d in alert hold\n",
+                     serverstatus, SCHED_count_active(), ALERTS_count_alerts() );
   junk = API_add_to_api_databuf( pApi_buffer, localbuffer, datalen, tx );
 
   if (pSCHEDULER_CONFIG_FLAGS.debug_level.schedlib >= DEBUG_LEVEL_PROC) {
@@ -2343,15 +2320,6 @@ void SCHED_Submit_Newday_Job( void ) {
    }
    MEMORY_free( datarec );
   
-   /*
-    * Recheck the license keys, just in case the license expired today
-    */
-   if (CONFIG_Initialise( (internal_flags *) &pSCHEDULER_CONFIG_FLAGS ) == 0) {
-      myprintf( "*ERR: LE064-Job Scheduler license for this system has expired.\n" );
-      myprintf( "*ERR: LE064-Please check your license keys.\n\n" );
-      myprintf( "*ERR: LE064-Server initialisation continuing but JOBS WILL NOT RUN until license is corrected.\n" );
-   }
-
   if (pSCHEDULER_CONFIG_FLAGS.debug_level.schedlib >= DEBUG_LEVEL_PROC) {
      myprintf( "DEBUG: Leaving SCHED_Submit_Newday_Job\n" );
   }

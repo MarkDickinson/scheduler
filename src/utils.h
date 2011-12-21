@@ -44,7 +44,6 @@ int          UTILS_get_daynumber( char * datastr );
 void         UTILS_strncpy( char * dest, char * src, int len );
 void         UTILS_uppercase_string( char * datastr );
 int          UTILS_legal_time( char * timestr );
-int          UTILS_legal_date_yyyymmdd( char * datestr );
 void         UTILS_encrypt_local( char * datastr, int datalen );
 void         myprintf( const char *fmt, ... );
 int          UTILS_wildcard_parse_string( char *buf, char *searchmask );

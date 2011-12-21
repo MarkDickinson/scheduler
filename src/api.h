@@ -71,7 +71,7 @@
 /*                      Dynamic Configuration changes                       */
 
 #define API_CMD_EXECJOB_STATE  "A00000401" /* Change the execjob state off/on to pause/resume scheduler */
-#define API_CMD_LICENSE        "A00000402" /* Set new license details                      */
+#define API_CMD_SPARENOW2      "A00000402" /* now spare                                    */
 #define API_CMD_CATCHUPFLAG    "A00000403" /* Adjust the catchup flag on or off            */
 #define API_CMD_SCHEDNEWDAYSET "A00000404" /* change the newday time                      */
 #define API_CMD_NEWDAYFAILACT  "A00000405" /* change the newday fail action if queue busy  */

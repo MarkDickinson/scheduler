@@ -234,17 +234,6 @@
    } currently_running_alerts_def;
 
 /* -------------------------------------------------
- * This structure is used to pass updated license
- * information to the server.
- * ------------------------------------------------- */
-   typedef struct {
-		   char company[51];
-		   char servername[100];
-		   char expires[9]; /* yyyymmdd */
-		   char license_key[41];
-   } api_license_data_def;
-
-/* -------------------------------------------------
    CALENDAR record structure.
    ------------------------------------------------- */
    typedef struct {

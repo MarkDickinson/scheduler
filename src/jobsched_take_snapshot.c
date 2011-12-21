@@ -169,11 +169,6 @@ int CONFIG_dump_config_file( char * configfile ) {
       printf("# WARNING: A Catchup Flag value I know nothing about (new ?), setting cathup to OFF\n" );
       printf( "SCHED CATCHUP OFF\n" );
    }
-   snprintf(cmdline, MAX_CHAR_LEN,
-     "SCHED LICENSE COMPANY %s,SERVERNAME %s,EXPIRES %s,KEY %s",
-	 config.company_name, config.servername, config.expires_on, config.license_key );
-   printf( "%s\n", cmdline );
-
    if (config.enabled == '0') {
 		   printf("# **********************************************************\n" );
 		   printf("# **** Caution, SCHED EXECJOBS was OFF at snapshot time ****\n" );
