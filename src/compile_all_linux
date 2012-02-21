@@ -22,8 +22,9 @@ else
 fi
 if [ ! -d ${targetdir} ];
 then
-   echo "*error* ${installdir} does not exist"
+   echo "*error* ${targetdir} does not exist"
    echo "The recompile expects an existing scheduler directory tree"
+   exit 1
 fi
 
 ## ------------------------------------------------------------------------
@@ -82,54 +83,54 @@ testcc() {
 ## Build the main application.
 ## ------------------------------------------------------------------------
 echo "Compiling server modules, wait..."
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused alerts.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused alerts.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type calendar.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type calendar.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused config.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused config.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type jobslib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type jobslib.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused schedlib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused schedlib.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type utils.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type utils.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused api.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused api.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused server.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused server.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type bulletproof.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type bulletproof.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type users.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type users.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type calendar_utils.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type calendar_utils.c
 testcc $?
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type memorylib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type memorylib.c
 testcc $?
-gcc alerts.o calendar.o config.o jobslib.o schedlib.o \
+gcc -ggdb3 alerts.o calendar.o config.o jobslib.o schedlib.o \
  utils.o api.o server.o bulletproof.o \
  users.o memorylib.o -o ${targetdir}/jobsched_daemon
 testcc $?
 
 echo "Compiling command line interface, wait..."
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type jobsched_cmd.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type jobsched_cmd.c
 testcc $?
-gcc calendar_utils.o bulletproof.o utils.o api.o memorylib.o jobsched_cmd.o -o ${targetdir}/jobsched_cmd
+gcc -ggdb3 calendar_utils.o bulletproof.o utils.o api.o memorylib.o jobsched_cmd.o -o ${targetdir}/jobsched_cmd
 testcc $?
 
 ## ------------------------------------------------------------------------
 ## Build some utility tools
 ## ------------------------------------------------------------------------
 echo "Building utility tools, wait..."
-gcc -c -D_GNU_SOURCE -Wall -Wreturn-type jobsched_take_snapshot.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type jobsched_take_snapshot.c
 testcc $?
-gcc utils.o memorylib.o jobsched_take_snapshot.o -o ${targetdir}/jobsched_take_snapshot
+gcc -ggdb3 utils.o memorylib.o jobsched_take_snapshot.o -o ${targetdir}/jobsched_take_snapshot
 testcc $?
-gcc -o ${targetdir}/explain_errno explain_errno.c
+gcc -ggdb3 -o ${targetdir}/explain_errno explain_errno.c
 testcc $?
-gcc -o ${targetdir}/jobsched_security_checks jobsched_security_checks.c 
+gcc -ggdb3 -o ${targetdir}/jobsched_security_checks jobsched_security_checks.c 
 testcc $?
-gcc -o ${targetdir}/jobsched_jobutil jobsched_jobutil.c 
+gcc -ggdb3 -o ${targetdir}/jobsched_jobutil jobsched_jobutil.c 
 testcc $?
 
 rm -rf *.o
