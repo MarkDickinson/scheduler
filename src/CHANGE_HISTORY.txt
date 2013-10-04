@@ -16,9 +16,22 @@ Change Type Key: (S) Security change
                  (N) New program included
 
 
+Fixes Since V1.15
+-----------------
+None: Version V1.15 is this release.
+
 Fixes Since V1.14
 -----------------
-Version V1.14 is this release.
+2012/02/21 - (I) Replaced all hard coded 70 lengths with JOB_LOGMSG_LEN in
+                 schedlib.c, no problem but should always have used the
+                 constant.
+             (I) added a comment in schedlib.c above the two strncpy lines
+                 that valgrind reported as being copying over themselves,
+                 saying it is deliberate and no problem.
+             (+) jobsched_cmd was allowing "alert info " (no jobname), now
+                 checks a jobname is present and aborts jobsched_cmd if not
+                 (must exit, still using fast fail to stop scripts doing damage).
+             (I) changed compile_all_linux to compile with symbols for now
 
 Fixes Since V1.13
 -----------------

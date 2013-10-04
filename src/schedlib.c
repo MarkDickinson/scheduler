@@ -759,7 +759,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
       local_alert.severity = '3'; /* page support */
       local_alert.acknowledged = 'N';
       strncpy( local_alert.failure_code, ALERTS_SCHED_QUEUEREAD_ERR, JOB_STATUSCODE_LEN );
-      snprintf( local_logrec.text, 70, "JOB %s: ACTIVE QUEUE FILE ERROR, SCHEDULING SUSPENDED !", datarec->job_header.jobname );
+      snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: ACTIVE QUEUE FILE ERROR, SCHEDULING SUSPENDED !", datarec->job_header.jobname );
       memcpy( (char *) &local_alert.job_details, (char *)&local_logrec, sizeof(joblog_def) );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
 	  /* return no job started */
@@ -777,7 +777,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
    strncpy( local_logrec.job_header.jobname, datarec->job_header.jobname, JOB_NAME_LEN );
    strncpy( local_logrec.msgid, "0000000000", JOB_LOGMSGID_LEN );
    strncpy( local_logrec.status_code, "000", JOB_STATUSCODE_LEN );
-   snprintf( local_logrec.text, 70, "JOB %s started\n", datarec->job_header.jobname );
+   snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s started\n", datarec->job_header.jobname );
    /*
     * and in case its needed our alert record
     */
@@ -793,7 +793,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
    strncpy( local_rec.job_header.jobname, datarec->job_header.jobname, JOB_NAME_LEN );
    job_recordnum = JOBS_read_record( &local_rec );
    if (job_recordnum == -1) {
-      snprintf( local_logrec.text, 70, "JOB %s: UNABLE TO READ JOB RECORD", datarec->job_header.jobname );
+      snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: UNABLE TO READ JOB RECORD", datarec->job_header.jobname );
       memcpy( (char *) &local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
       strncpy( local_alert.failure_code, ALERTS_JOB_FILEREAD_ERR, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
@@ -812,7 +812,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
    datarec->current_status = '2';  /* running */
    UTILS_datestamp( (char *)&datarec->started_running_at, time(0) ); /* record time started */
    if (SCHED_ACTIVE_write_record( datarec, active_recordnum ) == -1) {
-      snprintf( local_logrec.text, 70, "JOB %s: NOT RUN, UNABLE TO WRITE TO ACTIVE JOB QUEUE", datarec->job_header.jobname );
+      snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: NOT RUN, UNABLE TO WRITE TO ACTIVE JOB QUEUE", datarec->job_header.jobname );
       memcpy( (char *)&local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
       strncpy( local_alert.failure_code, ALERTS_SCHED_QUEUEWRITE_ERR, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
@@ -831,7 +831,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
     */
    run_blocked = JOBS_schedule_calendar_check( (jobsfile_def *) &local_rec, time_number );
    if (run_blocked != 0) {
-      snprintf( local_logrec.text, 70, "JOB %s: NOT RUN, EXCLUDED BY CALENDAR", datarec->job_header.jobname );
+      snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: NOT RUN, EXCLUDED BY CALENDAR", datarec->job_header.jobname );
       memcpy( (char *)&local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
       strncpy( local_alert.failure_code, ALERTS_CALENDAR_BLOCK, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
@@ -852,7 +852,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
    UTILS_remove_trailing_spaces( (char *)&local_rec.job_owner );
    newuid = UTILS_obtain_uid_from_name( (char *)&local_rec.job_owner ); 
    if (newuid < 0) {
-      snprintf( local_logrec.text, 70, "JOB %s: NOT RUN, USER %s IS NO LONGER ON THE SYSTEM",
+      snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: NOT RUN, USER %s IS NO LONGER ON THE SYSTEM",
 			    datarec->job_header.jobname,
 			    local_rec.job_owner
 			  );
@@ -873,7 +873,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
    pid_number = fork( );
    if (pid_number == -1) {
       /* failed to fork */
-      snprintf( local_logrec.text, 70, "JOB %s: UNABLE TO FORK. JOB NOT STARTED", datarec->job_header.jobname );
+      snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: UNABLE TO FORK. JOB NOT STARTED", datarec->job_header.jobname );
       memcpy( (char *)&local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
       strncpy( local_alert.failure_code, ALERTS_SCHED_FORK_ERR, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
@@ -924,7 +924,8 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
     */
    UTILS_remove_trailing_spaces( (char *)&local_rec.job_header.jobname );
    /* need this field sanity check for some reason
-	* fields didn't seem to be getting here null terminated earlier, so do so */
+    * fields didn't seem to be getting here null terminated earlier, so do so 
+    * (note: triggers a source and destination fields overlap in valgrind, is OK) */
    strncpy( local_rec.program_to_execute, local_rec.program_to_execute, JOB_EXECPROG_LEN );
    strncpy( local_rec.program_parameters, local_rec.program_parameters, JOB_PARM_LEN );
 
