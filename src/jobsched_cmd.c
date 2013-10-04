@@ -2229,43 +2229,35 @@ int alert_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
       API_init_buffer( pApi_buffer );
       strcpy( pApi_buffer->API_System_Name, "ALERT" );
       strncpy( pAlert_Rec->job_details.job_header.jobnumber, "000000", JOB_NUMBER_LEN );
-      UTILS_space_fill_string( pAlert_Rec->job_details.job_header.jobname, JOB_NAME_LEN );
+	  UTILS_space_fill_string( pAlert_Rec->job_details.job_header.jobname, JOB_NAME_LEN );
       pAlert_Rec->job_details.job_header.info_flag = 'A';   /* Active */
       if (memcmp(cmdstring,"ALERT RESTART",13) == 0) {
-         pSptr = pSptr + 13;
+	     pSptr = pSptr + 13;
          strcpy( pApi_buffer->API_Command_Number, API_CMD_SCHEDULE_ON );
       }
       else if (memcmp(cmdstring,"ALERT INFO",10) == 0) {
-         pSptr = pSptr + 10;
+	     pSptr = pSptr + 10;
          strcpy( pApi_buffer->API_Command_Number, API_CMD_RETRIEVE );
 	  }
       else if (memcmp(cmdstring,"ALERT ACK",9) == 0) {
-         pSptr = pSptr + 9;
+	     pSptr = pSptr + 9;
          strcpy( pApi_buffer->API_Command_Number, API_CMD_ALERT_ACK );
       }
       else if (memcmp(cmdstring,"ALERT FORCEOK",13) == 0) {
-         pSptr = pSptr + 13;
+	     pSptr = pSptr + 13;
          strcpy( pApi_buffer->API_Command_Number, API_CMD_ALERT_FORCEOK );
       }
-      while (*pSptr == ' ') { pSptr++; }  /* skip spaces between command and jobname */
+	  while (*pSptr == ' ') { pSptr++; }  /* skip spaces between command and jobname */
       strncpy( pAlert_Rec->job_details.job_header.jobname, pSptr, JOB_NAME_LEN );
-      if (
-            (strlen(pAlert_Rec->job_details.job_header.jobname) < 2) /* \n is 1 byte */ ||
-            (strncmp( pAlert_Rec->job_details.job_header.jobname, "  ", 1 ) == 0)
-         ) {
-         printf( "*E* a jobname must be provided in this command\n" );
-         nStatus = 0;   /* do not pass to the server */
-      } else {
-         API_set_datalen( pApi_buffer, sizeof(alertsfile_def) );
-         nStatus = 1;   /* Pass to the server */
-      }
+      API_set_datalen( pApi_buffer, sizeof(alertsfile_def) );
+	  nStatus = 1;   /* Pass to the server */
    }
    else if (memcmp(cmdstring,"ALERT LISTALL",13) == 0) {
       nStatus = generic_listall_cmd( "ALERT", pApi_buffer, "" );
    }
    else {
       printf( "*E* The ALERT command (%s) is not in sched_cmd yet\n", cmdstring );
-      printf( "    Options are : LISTALL, ACK <jobname>, INFO <jobname>, RESTART <jobname>\n" );
+	  printf( "    Options are : LISTALL, ACK <jobname>, INFO <jobname>, RESTART <jobname>\n" );
       nStatus = 0;
    }
    return( nStatus );
