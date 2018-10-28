@@ -20,10 +20,6 @@
 
 /* #define DEBUG_MODE_ON 1 */
 
-/* Added to try to figure out why segfaults occur when a non root
- * user tries to autolin but works fine for root; will move to the
- * constants file after testing as this should be a constant anyway
-*/
 #define MAX_WORKBUF_LEN_JS 4096
 
 /* Global variable required, this is used bu UTILS.H. In normal utils use
@@ -129,7 +125,7 @@ void help_request_interface( char * sHelpRequest ) {
       printf("DEBUG BULLETPROOF n ( data structure checking library )\n");
       printf("DEBUG USER n        ( user management library )\n");
       printf("DEBUG MEMORY n      ( memory management library )\n");
-      printf("DEBUG ALL n\n");
+      printf("DEBUG ALL n         ( all the above )\n");
    }
    else if (memcmp(ptr,"DEP",3) == 0) {
       printf("The DEP commands are used to manage entries in the dependency\n");
@@ -742,7 +738,7 @@ int job_definition_add( char *pCmdstring, char *pJobname, API_Header_Def *pAPI_b
 #ifdef DEBUG_MODE_ON
    printf( "DEBUG: in job_definition_add (setting defaults)\n" );
 #endif
-   strncpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
+   memcpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
    strncpy( pJobRecord->job_header.jobname, pJobname, JOB_NAME_LEN );
    UTILS_space_fill_string( pJobRecord->job_header.jobname, JOB_NAME_LEN );
    pJobRecord->job_header.info_flag = 'A';   /* Active */
@@ -757,7 +753,7 @@ int job_definition_add( char *pCmdstring, char *pJobname, API_Header_Def *pAPI_b
    for (i = 0; i < 7; i++) {
 	   pJobRecord->crontype_weekdays[i] = '0';
    }
-   for (i = 0; i < JOB_REPEATLEN; i++ ); {
+   for (i = 0; i < JOB_REPEATLEN; i++ ) {
       pJobRecord->requeue_mins[i] = '0';
    }
    pJobRecord->job_catchup_allowed = 'Y';
@@ -827,7 +823,7 @@ int job_definition_update( char *pCmdstring, char *pJobname, API_Header_Def *pAP
    
    
    /* then update from the read record */
-   strncpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
+   memcpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
    strncpy( pJobRecord->job_header.jobname, pJobname, JOB_NAME_LEN );
    pJobRecord->job_header.info_flag = 'A';   /* Active */
 #ifdef DEBUG_MODE_ON
@@ -880,7 +876,7 @@ int job_definition_showdef( char *pCmdstring, char *pJobname, API_Header_Def *pA
 #endif
    UTILS_zero_fill( (char *)pJobRecord, sizeof(jobsfile_def) );
 
-   strncpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
+   memcpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
    strncpy( pJobRecord->job_header.jobname, pJobname, JOB_NAME_LEN );
    pJobRecord->job_header.info_flag = 'A';   /* Active */
 
@@ -924,7 +920,7 @@ int job_submit( char *pCmdstring, char *pJobname, API_Header_Def *pAPI_buffer ) 
 #endif
    UTILS_zero_fill( (char *)pJobRecord, sizeof(jobsfile_def) );
 
-   strncpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
+   memcpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
    strncpy( pJobRecord->job_header.jobname, pJobname, JOB_NAME_LEN );
    pJobRecord->job_header.info_flag = 'A';   /* Active */
 
@@ -965,7 +961,7 @@ int job_definition_delete( char *pCmdstring, char *pJobname, API_Header_Def *pAP
    API_init_buffer( pAPI_buffer );
    strcpy( pAPI_buffer->API_System_Name, "JOB" );
    strcpy( pAPI_buffer->API_Command_Number, API_CMD_JOB_DELETE );
-   strncpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
+   memcpy( pJobRecord->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
    strncpy( pJobRecord->job_header.jobname, pJobname, JOB_NAME_LEN );
    pJobRecord->job_header.info_flag = 'A';   /* Active */
    API_set_datalen( pAPI_buffer, sizeof(jobsfile_def) );
@@ -1590,7 +1586,7 @@ int calendar_definition_send( char *pCmdstring, char *pCalname, API_Header_Def *
  *            FORMAT DAYS ALL|JAN|FEB...DEC "DD,DD,DD,DD..."
  *            FORMAT DAYNAMES "SUN,MON,TUE,WED,THU,FRI,SAT"
  */
-		 if (memcmp(sTestParmName,"MONTHSDAYS",10) == 0) {
+	 if (memcmp(sTestParmName,"MONTHSDAYS",10) == 0) {
             pSptr = pSptr + UTILS_count_delims( pSptr, ' ' );
             nFieldLen = UTILS_parse_string( pSptr, '"', (char *)&sTestParmValue, 149, 
                                             &nLeadingPads, &nOverrunFlag );
@@ -1858,7 +1854,7 @@ int sched_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
 	  while (*pSptr == ' ') { pSptr++; }
       strcpy( pApi_buffer->API_Command_Number, API_CMD_DELETE );
 	  job_header = (job_header_def *)&pApi_buffer->API_Data_Buffer;
-	  strncpy(job_header->jobnumber,"000000",JOB_NUMBER_LEN);
+	  memcpy(job_header->jobnumber,"000000",JOB_NUMBER_LEN);
 	  strncpy(job_header->jobname, pSptr, JOB_NAME_LEN );
 	  UTILS_space_fill_string( (char *)&job_header->jobname, JOB_NAME_LEN );
 	  job_header->info_flag = 'A';
@@ -1869,7 +1865,7 @@ int sched_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
 	  while (*pSptr == ' ') { pSptr++; }
       strcpy( pApi_buffer->API_Command_Number, API_CMD_RUNJOBNOW );
 	  job_header = (job_header_def *)&pApi_buffer->API_Data_Buffer;
-	  strncpy(job_header->jobnumber,"000000",JOB_NUMBER_LEN);
+	  memcpy(job_header->jobnumber,"000000",JOB_NUMBER_LEN);
 	  strncpy(job_header->jobname, pSptr, JOB_NAME_LEN );
 	  UTILS_space_fill_string( (char *)&job_header->jobname, JOB_NAME_LEN );
 	  job_header->info_flag = 'A';
@@ -1880,7 +1876,7 @@ int sched_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
 	  while (*pSptr == ' ') { pSptr++; }
       strcpy( pApi_buffer->API_Command_Number, API_CMD_JOBHOLD_ON );
 	  job_header = (job_header_def *)&pApi_buffer->API_Data_Buffer;
-	  strncpy(job_header->jobnumber,"000000",JOB_NUMBER_LEN);
+	  memcpy(job_header->jobnumber,"000000",JOB_NUMBER_LEN);
 	  strncpy(job_header->jobname, pSptr, JOB_NAME_LEN );
 	  UTILS_space_fill_string( (char *)&job_header->jobname, JOB_NAME_LEN );
 	  job_header->info_flag = 'A';
@@ -1891,7 +1887,7 @@ int sched_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
 	  while (*pSptr == ' ') { pSptr++; }
       strcpy( pApi_buffer->API_Command_Number, API_CMD_JOBHOLD_OFF );
 	  job_header = (job_header_def *)&pApi_buffer->API_Data_Buffer;
-	  strncpy(job_header->jobnumber,"000000",JOB_NUMBER_LEN);
+	  memcpy(job_header->jobnumber,"000000",JOB_NUMBER_LEN);
 	  strncpy(job_header->jobname, pSptr, JOB_NAME_LEN );
 	  UTILS_space_fill_string( (char *)&job_header->jobname, JOB_NAME_LEN );
 	  job_header->info_flag = 'A';
@@ -2228,7 +2224,7 @@ int alert_command( char *cmdstring, API_Header_Def *pApi_buffer ) {
 	  pSptr = cmdstring;
       API_init_buffer( pApi_buffer );
       strcpy( pApi_buffer->API_System_Name, "ALERT" );
-      strncpy( pAlert_Rec->job_details.job_header.jobnumber, "000000", JOB_NUMBER_LEN );
+      memcpy( pAlert_Rec->job_details.job_header.jobnumber, "000000", JOB_NUMBER_LEN );
       UTILS_space_fill_string( pAlert_Rec->job_details.job_header.jobname, JOB_NAME_LEN );
       pAlert_Rec->job_details.job_header.info_flag = 'A';   /* Active */
       if (memcmp(cmdstring,"ALERT RESTART",13) == 0) {
@@ -2764,7 +2760,7 @@ int build_request_buffer( char *pCmdstring, API_Header_Def *pApibuffer ) {
 
    API_init_buffer( pApibuffer );
    API_set_datalen( pApibuffer, 0 );
-   strncpy( pApibuffer->API_EyeCatcher, API_EYECATCHER, 4 );
+   memcpy( pApibuffer->API_EyeCatcher, API_EYECATCHER, 4 );
 
 #ifdef DEBUG_MODE_ON
    printf( "DEBUG: in build_request_buffer (init API complete)\n" );
@@ -2806,8 +2802,8 @@ int build_request_buffer( char *pCmdstring, API_Header_Def *pApibuffer ) {
    }
    else if (memcmp(pCmdstring,"DEP",3) == 0) {      /* dependency */
       /* Cannot be uppercased, may contain a filename */
-      strncpy( pApibuffer->API_System_Name, "DEP", 3 );
-	  nStatus = dependency_command( pCmdstring, pApibuffer );
+      memcpy( pApibuffer->API_System_Name, "DEP", 3 );
+      nStatus = dependency_command( pCmdstring, pApibuffer );
    }
    else if (memcmp(pCmdstring,"DEBUG",5) == 0) {      /* debugging */
       /* Can be uppercased now */
@@ -2912,6 +2908,10 @@ int command_process( int iSockid, char *pCmdstring ) {
 void data_response_process( API_Header_Def * api_bufptr ) {
    calendar_def * calbuffer;
 
+#ifdef DEBUG_MODE_ON
+   printf( "In data_response_process \n");
+#endif
+
    if (memcmp(api_bufptr->API_System_Name,"CAL",3) == 0) {
       if (memcmp(api_bufptr->API_Command_Number,API_CMD_DUMP_FORMATTED,API_CMD_LEN) == 0) {
          calbuffer = (calendar_def *)&api_bufptr->API_Data_Buffer;
@@ -2932,6 +2932,9 @@ void data_response_process( API_Header_Def * api_bufptr ) {
       printf( "    Handling of raw data is not supported in jobsched_cmd for that subsystem yet.\n" );
       printf( "    The reply has been discarded.\n" );
    }
+#ifdef DEBUG_MODE_ON
+   printf( "Leaving data_response_process \n");
+#endif
 } /* data_response_process */
 
 /* *****************************************************************************
@@ -3001,60 +3004,63 @@ int main(int argc, char **argv) {
 			   * processing routines. */
          command_result = command_process( s, (char *)&workbuf );
          if (command_result == 1) {       /* response expected */
-			   api_bufptr->API_More_Data_Follows = '1';
-			   while (api_bufptr->API_More_Data_Follows == '1') {
-                  z = read(s, &workbuf, 4095);
+                 api_bufptr->API_More_Data_Follows = '1';
+                 while (api_bufptr->API_More_Data_Follows == '1') {
 #ifdef DEBUG_MODE_ON
-                  printf("DEBUG: dumping server response\n" );
+                  printf("DEBUG: reading socket response\n");
+#endif
+                  z = read(s, &workbuf, MAX_WORKBUF_LEN_JS - 1);
+#ifdef DEBUG_MODE_ON
+                  printf("DEBUG: dumping server response, %d bytes\n", z );
                   API_DEBUG_dump_api( (API_Header_Def *)api_bufptr );
 #endif
                   if (z == -1) die("read(2) - command response");
                   workbuf[z] = '\0';
-			      /* Check for API response or text response */
+                  /* Check for API response or text response */
                   if (memcmp(api_bufptr->API_EyeCatcher, API_EYECATCHER, 4) == 0) {
-				     if (memcmp(api_bufptr->API_Command_Response,API_RESPONSE_ERROR, API_RESPCODE_LEN) == 0) {
-					    API_Set_LF_Fields( api_bufptr );
-			            printf("%s\n", api_bufptr->API_Data_Buffer);
-				     }
-				     else if (memcmp(api_bufptr->API_Command_Response,API_RESPONSE_DISPLAY, API_RESPCODE_LEN) == 0) {
-				        /* Display data returned, no other action needed */
-					    API_Set_LF_Fields( api_bufptr );
-			            printf("%s\n", api_bufptr->API_Data_Buffer);
-				     }
-				     else if (memcmp(api_bufptr->API_Command_Response,API_RESPONSE_DATA, API_RESPCODE_LEN) == 0) {
-					    API_Set_LF_Fields( api_bufptr );
-				        data_response_process( api_bufptr );
-				     }
-				     else {
-			            /* ERROR, response returned is not legal */
-					    printf( "****ERROR**** Illegal response code %s in reply from server task !\n",
-                                api_bufptr->API_Command_Response );
-				     }
-		          }
-			      else {
+                     if (memcmp(api_bufptr->API_Command_Response,API_RESPONSE_ERROR, API_RESPCODE_LEN) == 0) {
+                        API_Set_LF_Fields( api_bufptr ); 
+                        printf("%s\n", api_bufptr->API_Data_Buffer);
+                     }
+                     else if (memcmp(api_bufptr->API_Command_Response,API_RESPONSE_DISPLAY, API_RESPCODE_LEN) == 0) {
+                        /* Display data returned, no other action needed */
+                        API_Set_LF_Fields( api_bufptr ); 
+                        printf("%s\n", api_bufptr->API_Data_Buffer);
+                     }
+                        else if (memcmp(api_bufptr->API_Command_Response,API_RESPONSE_DATA, API_RESPCODE_LEN) == 0) {
+                        API_Set_LF_Fields( api_bufptr );
+                        data_response_process( api_bufptr );
+                     }
+                     else {
+                        /* ERROR, response returned is not legal */
+                        printf( "****ERROR**** Illegal response code %s in reply from server task !\n",
+                        api_bufptr->API_Command_Response );
+                     }
+                  }
+                  else {
                      printf("*E* No API eyecatcher returned, displaying data received and stopping...\n" );
                      printf( "%s\n", workbuf );
-					 printf( "*E* Server has probably been stopped !\n" );
-					 stop_now = 1;
-					 /* it didn't exit the loop with stop_now set, so exit
-					  * ourselves ! */
+                     printf( "*E* Server has probably been stopped !\n" );
+                     stop_now = 1;
+                     /* it didn't exit the loop with stop_now set, so exit
+                      * ourselves ! */
                      disconnect_from_server( s ); /* close old connection */
-					 return( 1 ); /* something wrong */
-			      }
-			   } /* while more data follows */
+                     return( 1 ); /* something wrong */
+                 }
+             } /* while more data follows */
          }  /* if command result == 1 */
-		 else if (command_result == 2) {    /* no response expected, keep going */
-				 /* no action needed */
-		 }
-		 else if (command_result == 3) {    /* Open request to be processed */
+         else if (command_result == 2) {    /* no response expected, keep going */
+             /* no action needed */
+         }
+         else if (command_result == 3) {    /* Open request to be processed */
             if ((memcmp(workbuf,"OPEN INFO",9) == 0) || (memcmp(workbuf,"open info",9) == 0) ) {
                printf( "*I*: Currently connected to %s on port %d\n", last_addr, last_port );
             }
             else {
                next_port = last_port;    /* allow a default on port number */
-			   strcpy( next_addr, "" );  /* no default on next address */
-			   command_result = parse_open_command( (char *)&workbuf, &next_port, (char *)&next_addr );
-			   if (command_result == 1) { /* passes syntax checks */
+               strcpy( next_addr, "" );  /* no default on next address */
+               command_result = parse_open_command( (char *)&workbuf, &next_port, (char *)&next_addr );
+               if (command_result == 1) { /* passes syntax checks */
                    disconnect_from_server( s ); /* close old connection */
                    if ((command_result = connect_to_server( next_port, next_addr, &s )) == 0) {
                       /* connection failed, open the last connection again */
@@ -3063,7 +3069,7 @@ int main(int argc, char **argv) {
                          exit( 1 ); /* failed, die out */
                       }
                    }
-				   else {
+                   else {
                       /* connected to new server, save new recover defaults */
                       strncpy( last_addr, next_addr, 59 );
                       last_port = next_port;
@@ -3071,7 +3077,7 @@ int main(int argc, char **argv) {
                    }
                }
             } /* not an INFO */
-		 }
+         }  /* end if an open block */
          else {                             /* we should shutdown */
             stop_now = 1;
          }

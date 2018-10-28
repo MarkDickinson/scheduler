@@ -202,7 +202,7 @@ int SCHED_schedule_on( jobsfile_def * datarec ) {
            datarec->next_scheduled_runtime, JOB_DATETIME_LEN );
    UTILS_space_fill_string( (char *)&local_active_rec->next_scheduled_runtime, JOB_DATETIME_LEN );
    local_active_rec->current_status = '0'; /* time wait */
-   strncpy( local_active_rec->failure_code, "000", JOB_STATUSCODE_LEN );
+   memcpy( local_active_rec->failure_code, "000", JOB_STATUSCODE_LEN );
    local_active_rec->hold_flag = 'N';
    for (i = 0; i < MAX_DEPENDENCIES; i++) {
       if (datarec->dependencies[i].dependency_type != '0') {
@@ -216,7 +216,7 @@ int SCHED_schedule_on( jobsfile_def * datarec ) {
       myprintf("DEBUG: SCHED_schedule_on, Active queue details at this point\n" );
       SCHED_DEBUG_dump_active_queue_def( local_active_rec );
    }
-   strncpy( local_active_rec->started_running_at, "00000000 00:00:00", JOB_DATETIME_LEN );
+   memcpy( local_active_rec->started_running_at, "00000000 00:00:00", JOB_DATETIME_LEN );
    local_active_rec->started_running_at[JOB_DATETIME_LEN] = '\0';
    if (SCHED_ACTIVE_write_record( local_active_rec, -1 ) == -1) {
       MEMORY_free( local_active_rec );
@@ -754,11 +754,11 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
 	   */ 
       strncpy( local_logrec.job_header.jobnumber, datarec->job_header.jobnumber, JOB_NUMBER_LEN );
       strncpy( local_logrec.job_header.jobname, datarec->job_header.jobname, JOB_NAME_LEN );
-      strncpy( local_logrec.msgid, "0000000000", JOB_LOGMSGID_LEN );
-      strncpy( local_logrec.status_code, "000", JOB_STATUSCODE_LEN );
+      memcpy( local_logrec.msgid, "0000000000", JOB_LOGMSGID_LEN );
+      memcpy( local_logrec.status_code, "000", JOB_STATUSCODE_LEN );
       local_alert.severity = '3'; /* page support */
       local_alert.acknowledged = 'N';
-      strncpy( local_alert.failure_code, ALERTS_SCHED_QUEUEREAD_ERR, JOB_STATUSCODE_LEN );
+      memcpy( local_alert.failure_code, ALERTS_SCHED_QUEUEREAD_ERR, JOB_STATUSCODE_LEN );
       snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: ACTIVE QUEUE FILE ERROR, SCHEDULING SUSPENDED !", datarec->job_header.jobname );
       memcpy( (char *) &local_alert.job_details, (char *)&local_logrec, sizeof(joblog_def) );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
@@ -775,14 +775,14 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
     */
    strncpy( local_logrec.job_header.jobnumber, datarec->job_header.jobnumber, JOB_NUMBER_LEN );
    strncpy( local_logrec.job_header.jobname, datarec->job_header.jobname, JOB_NAME_LEN );
-   strncpy( local_logrec.msgid, "0000000000", JOB_LOGMSGID_LEN );
-   strncpy( local_logrec.status_code, "000", JOB_STATUSCODE_LEN );
+   memcpy( local_logrec.msgid, "0000000000", JOB_LOGMSGID_LEN );
+   memcpy( local_logrec.status_code, "000", JOB_STATUSCODE_LEN );
    snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s started\n", datarec->job_header.jobname );
    /*
     * and in case its needed our alert record
     */
    local_alert.severity = '3'; /* page support */
-   strncpy( local_alert.failure_code, ALERTS_NO_ERROR, JOB_STATUSCODE_LEN );
+   memcpy( local_alert.failure_code, ALERTS_NO_ERROR, JOB_STATUSCODE_LEN );
    local_alert.acknowledged = 'N';
 
 
@@ -795,7 +795,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
    if (job_recordnum == -1) {
       snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: UNABLE TO READ JOB RECORD", datarec->job_header.jobname );
       memcpy( (char *) &local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
-      strncpy( local_alert.failure_code, ALERTS_JOB_FILEREAD_ERR, JOB_STATUSCODE_LEN );
+      memcpy( local_alert.failure_code, ALERTS_JOB_FILEREAD_ERR, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
       UTILS_set_message( "Unable to read job record" );
       if (pSCHEDULER_CONFIG_FLAGS.debug_level.schedlib >= DEBUG_LEVEL_PROC) {
@@ -814,7 +814,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
    if (SCHED_ACTIVE_write_record( datarec, active_recordnum ) == -1) {
       snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: NOT RUN, UNABLE TO WRITE TO ACTIVE JOB QUEUE", datarec->job_header.jobname );
       memcpy( (char *)&local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
-      strncpy( local_alert.failure_code, ALERTS_SCHED_QUEUEWRITE_ERR, JOB_STATUSCODE_LEN );
+      memcpy( local_alert.failure_code, ALERTS_SCHED_QUEUEWRITE_ERR, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
       myprintf( "*ERR: LE018-Unable to access active jobs file, job %s not scheduled on\n", datarec->job_header.jobname );
       UTILS_set_message( "Unable to access active jobs file, job not scheduled on" );
@@ -833,7 +833,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
    if (run_blocked != 0) {
       snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: NOT RUN, EXCLUDED BY CALENDAR", datarec->job_header.jobname );
       memcpy( (char *)&local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
-      strncpy( local_alert.failure_code, ALERTS_CALENDAR_BLOCK, JOB_STATUSCODE_LEN );
+      memcpy( local_alert.failure_code, ALERTS_CALENDAR_BLOCK, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
       UTILS_set_message( "Job blocked by calendar exclusion dates" );
       if (pSCHEDULER_CONFIG_FLAGS.log_level > 1) {
@@ -857,7 +857,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
 			    local_rec.job_owner
 			  );
       memcpy( (char *)&local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
-      strncpy( local_alert.failure_code, ALERTS_USERNOTFOUND, JOB_STATUSCODE_LEN );
+      memcpy( local_alert.failure_code, ALERTS_USERNOTFOUND, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
       UTILS_set_message( "Job owner has been deleted from the system !" );
       myprintf( "*ERR: LE019-Job %s not run, user %s no longer exists\n", datarec->job_header.jobname, local_rec.job_owner );
@@ -875,7 +875,7 @@ int  SCHED_spawn_job( active_queue_def * datarec ) {
       /* failed to fork */
       snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: UNABLE TO FORK. JOB NOT STARTED", datarec->job_header.jobname );
       memcpy( (char *)&local_alert.job_details, (char *)&local_logrec, sizeof(local_logrec) );
-      strncpy( local_alert.failure_code, ALERTS_SCHED_FORK_ERR, JOB_STATUSCODE_LEN );
+      memcpy( local_alert.failure_code, ALERTS_SCHED_FORK_ERR, JOB_STATUSCODE_LEN );
       junk = ALERTS_write_alert_record( &local_alert, -1 );
       UTILS_format_message( "Unable to fork a child process, errno ", errno );
       datarec->current_status = '3';  /* failed */
@@ -1804,12 +1804,12 @@ void SCHED_DEPEND_listall_waiting_on_dep( API_Header_Def * pApi_buffer, FILE *tx
 
   API_init_buffer( pApi_buffer );
   strcpy( pApi_buffer->API_System_Name, "DEP" );
-  strncpy( pApi_buffer->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
+  memcpy( pApi_buffer->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
 
   /* if we don't have a 2K buffer don't even attempt it */
   if (MAX_API_DATA_LEN < 2048) {
      myprintf( "*ERR: LE058-Data buffer is < 2K, programmer error (SCHED_DEPEND_listall_waiting_on_dep)\n");
-     strncpy( pApi_buffer->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
+     memcpy( pApi_buffer->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
      strcpy( pApi_buffer->API_Data_Buffer,
                         "*ERROR* : MAX_API_BUFFER < 2K, programmer error\n" );
      API_set_datalen( pApi_buffer, strlen(pApi_buffer->API_Data_Buffer) );     
@@ -1820,7 +1820,7 @@ void SCHED_DEPEND_listall_waiting_on_dep( API_Header_Def * pApi_buffer, FILE *tx
 		   myprintf( "*ERR: LE059-Unable to malloc %d bytes (SCHED_DEPEND_listall_waiting_on_dep)\n",
 				   sizeof(dependency_queue_def)
 			     );
-           strncpy( pApi_buffer->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
+           memcpy( pApi_buffer->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
            strcpy( pApi_buffer->API_Data_Buffer, "*E* Unable to allocate memory for the request, see log\n" );
            API_set_datalen( pApi_buffer, strlen(pApi_buffer->API_Data_Buffer) );     
 		   return;
@@ -1973,11 +1973,11 @@ void SCHED_display_server_status( API_Header_Def * pApi_buffer, internal_flags *
      changes that. */
   API_init_buffer( pApi_buffer );
   strcpy( pApi_buffer->API_System_Name, "SCHED" );
-  strncpy( pApi_buffer->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
+  memcpy( pApi_buffer->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
 
   /* if we don't have a 2K buffer don't even attempt it */
   if (MAX_API_DATA_LEN < 2048) {
-     strncpy( pApi_buffer->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
+     memcpy( pApi_buffer->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
      datalen = snprintf( pApi_buffer->API_Data_Buffer, (MAX_API_DATA_LEN - 1),
                         "*ERROR* : MAX_API_BUFFER < 2K, programmer error\n" );
      API_set_datalen( pApi_buffer, datalen );     
@@ -2133,11 +2133,11 @@ void SCHED_display_server_status_alertsonly( API_Header_Def * pApi_buffer, inter
      changes that. */
   API_init_buffer( pApi_buffer );
   strcpy( pApi_buffer->API_System_Name, "SCHED" );
-  strncpy( pApi_buffer->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
+  memcpy( pApi_buffer->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
 
   /* if we don't have a 2K buffer don't even attempt it */
   if (MAX_API_DATA_LEN < 2048) {
-     strncpy( pApi_buffer->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
+     memcpy( pApi_buffer->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
      datalen = snprintf( pApi_buffer->API_Data_Buffer, (MAX_API_DATA_LEN - 1),
                         "*ERROR* : MAX_API_BUFFER < 2K, programmer error\n" );
      API_set_datalen( pApi_buffer, datalen );     
@@ -2232,7 +2232,7 @@ Host Name <hostname>, Server is Enabled/Disabled/Shutting Down, nnn running jobs
      changes that. */
   API_init_buffer( pApi_buffer );
   strcpy( pApi_buffer->API_System_Name, "SCHED" );
-  strncpy( pApi_buffer->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
+  memcpy( pApi_buffer->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
 
   if (GLOBAL_flags->enabled == '1') { strncpy( serverstatus, "ENABLED (running jobs)", 59 ); }
   else if (GLOBAL_flags->enabled == '2') { strncpy( serverstatus, "DISABLED : SHUTDOWN REQUEST QUEUED", 59 ); }
@@ -2270,7 +2270,7 @@ void SCHED_Submit_Newday_Job( void ) {
 
    strcpy( datarec->job_header.jobname, "SCHEDULER-NEWDAY" );
    UTILS_space_fill_string( (char *)&datarec->job_header.jobname, JOB_NAME_LEN );
-   strncpy( datarec->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
+   memcpy( datarec->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
    datarec->job_header.info_flag = 'S';    /* system job */
 
    /* first ensure we don't already have one scheduled */
@@ -2297,7 +2297,7 @@ void SCHED_Submit_Newday_Job( void ) {
    datarec->run_timestamp = next_time;
    datarec->current_status = '0'; /* time wait */
    datarec->hold_flag = 'N';      /* not held */
-   strncpy( datarec->failure_code, "000", JOB_STATUSCODE_LEN );
+   memcpy( datarec->failure_code, "000", JOB_STATUSCODE_LEN );
    strncpy( datarec->job_owner, "INTERNAL", JOB_OWNER_LEN );
    if (pSCHEDULER_CONFIG_FLAGS.log_level > 1) {
       myprintf( "INFO: LI019-Scheduler next newday run time is  %s\n", datarec->next_scheduled_runtime );

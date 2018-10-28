@@ -395,7 +395,7 @@ void ALERTS_display_alerts( API_Header_Def * api_bufptr, FILE *tx ) {
 
    API_init_buffer( api_bufptr );
    strcpy( api_bufptr->API_System_Name, "DEP" );
-   strncpy( api_bufptr->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
+   memcpy( api_bufptr->API_Command_Response, API_RESPONSE_DISPLAY, API_RESPCODE_LEN );
 
    /*
     * read through each record in the alerts file and format
@@ -405,7 +405,7 @@ void ALERTS_display_alerts( API_Header_Def * api_bufptr, FILE *tx ) {
    if (lasterror != 0) {
       myprintf( "*ERR: AE013-Seek to start of alerts file failed (ALERTS_display_alert)\n" );
       UTILS_set_message( "Seek to start of alerts file failed" );
-      strncpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
+      memcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
 	  strcpy( api_bufptr->API_Data_Buffer, "*E* Request failed, Server had an IO error on alerts file\n" );
       API_set_datalen( api_bufptr, strlen(api_bufptr->API_Data_Buffer) );
       return;
@@ -417,7 +417,7 @@ void ALERTS_display_alerts( API_Header_Def * api_bufptr, FILE *tx ) {
    if ((local_rec = (alertsfile_def *)MEMORY_malloc(sizeof(alertsfile_def),"ALERTS_display_alerts")) == NULL) {
 	  myprintf( "*ERR: AE014-Unable to allocate %d bytes of memory (ALERTS_display_alert)\n", sizeof(alertsfile_def) );
       UTILS_set_message( "Unable to allocate memoryfor alert read" );
-      strncpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
+      memcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
 	  strcpy( api_bufptr->API_Data_Buffer, "*E* Request failed, Server unable to malloc required memory for request\n" );
       API_set_datalen( api_bufptr, strlen(api_bufptr->API_Data_Buffer) );
       return;
@@ -431,7 +431,7 @@ void ALERTS_display_alerts( API_Header_Def * api_bufptr, FILE *tx ) {
          MEMORY_free( local_rec );
          myprintf( "*ERR: A015-Read error occurred on alerts file (ALERTS_display_alert).\n" );
          UTILS_set_message( "Read error on alerts file" );
-         strncpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
+         memcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR, API_RESPCODE_LEN );
 	     strcpy( api_bufptr->API_Data_Buffer, "*E* Request failed, Server had an IO error on alerts file\n" );
          API_set_datalen( api_bufptr, strlen(api_bufptr->API_Data_Buffer) );
          return;
@@ -635,7 +635,7 @@ void ALERTS_generic_system_alert( job_header_def * job_header, char * msgtext ) 
    strncpy( local_alerts_rec->job_details.text, msgtext, JOB_LOGMSG_LEN );
    strncpy( local_alerts_rec->job_details.status_code, "000\0", JOB_STATUSCODE_LEN+1 ); /* include null */
    local_alerts_rec->severity = '2';
-   strncpy( local_alerts_rec->failure_code, "000\n", JOB_STATUSCODE_LEN+1 ); /* include null */
+   memcpy( local_alerts_rec->failure_code, "000", JOB_STATUSCODE_LEN ); 
    local_alerts_rec->failure_code[JOB_STATUSCODE_LEN] = '\0';
    local_alerts_rec->acknowledged = 'N';
    junk = ALERTS_update_alert( local_alerts_rec, '1', "000", 'N' );
@@ -676,7 +676,7 @@ void ALERTS_generic_system_alert_MSGONLY( job_header_def * job_header, char * ms
    strncpy( local_alerts_rec->job_details.text, msgtext, JOB_LOGMSG_LEN );
    strncpy( local_alerts_rec->job_details.status_code, "000\0", JOB_STATUSCODE_LEN+1 ); /* include null */
    local_alerts_rec->severity = '2';
-   strncpy( local_alerts_rec->failure_code, "000\n", JOB_STATUSCODE_LEN+1 ); /* include null */
+   memcpy( local_alerts_rec->failure_code, "000", JOB_STATUSCODE_LEN ); 
    local_alerts_rec->failure_code[JOB_STATUSCODE_LEN] = '\0';
    local_alerts_rec->acknowledged = 'N';
    junk = ALERTS_write_alert_record( local_alerts_rec, -2 );

@@ -156,6 +156,10 @@ long CALENDAR_read_record( calendar_def * datarec ) {
     */
    if (recordfound != -1) {
       memcpy( datarec->calendar_name, local_rec->calendar_name, sizeof( calendar_def ) );
+      if (pSCHEDULER_CONFIG_FLAGS.debug_level.calendar >= DEBUG_LEVEL_IO) {
+	     myprintf( "DEBUG: Calendar %s (Type %c) for year %s retrieved OK\n",
+                   datarec->calendar_name, datarec->calendar_type, datarec->year );
+      }
    }
    else {
       if (pSCHEDULER_CONFIG_FLAGS.debug_level.calendar >= DEBUG_LEVEL_IO) {
@@ -910,32 +914,37 @@ void CALENDAR_put_record_in_API( API_Header_Def * api_bufptr ) {
    calendar_def * calbuffer;
    char msgbuffer[101];
 
+   if (pSCHEDULER_CONFIG_FLAGS.debug_level.calendar >= DEBUG_LEVEL_PROC) {
+      myprintf( "DEBUG: Entered CALENDAR_put_record_in_API\n" );
+   }
+
    strcpy( api_bufptr->API_System_Name, "CAL" );
    strcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR );
    calbuffer = (calendar_def *)&api_bufptr->API_Data_Buffer;
 
    if (sizeof(calendar_def) > MAX_API_DATA_LEN) {
-	  strcpy( api_bufptr->API_Data_Buffer, "API Data Buffer is to small to hold the response, programmer error !\n" );
+      strcpy( api_bufptr->API_Data_Buffer, "API Data Buffer is to small to hold the response, programmer error !\n" );
       API_set_datalen( (API_Header_Def *)api_bufptr, strlen(api_bufptr->API_Data_Buffer) );
       return;
    }
 
    if (CALENDAR_read_record(calbuffer) < 0) {
-      /* For some reason the data in calbuffer is being overwritten ?, did we
-	   * do it here ? 
-	  snprintf( api_bufptr->API_Data_Buffer, MAX_API_DATA_LEN, "Calendar %s (Type %c) for year %s not found on server\n",
-                calbuffer->calendar_name, calbuffer->calendar_type, calbuffer->year );
-		*/
-	  snprintf( msgbuffer, 100, "Calendar %s (Type %c) for year %s not found on server\n",
-                calbuffer->calendar_name, calbuffer->calendar_type, calbuffer->year );
-	  strcpy( api_bufptr->API_Data_Buffer, msgbuffer );
+      snprintf( msgbuffer, 100, "Calendar %s (Type %c) for year %s not found on server\n",
+               calbuffer->calendar_name, calbuffer->calendar_type, calbuffer->year );
+      strcpy( api_bufptr->API_Data_Buffer, msgbuffer );
       API_set_datalen( (API_Header_Def *)api_bufptr, strlen(api_bufptr->API_Data_Buffer) );
+      if (pSCHEDULER_CONFIG_FLAGS.debug_level.calendar >= DEBUG_LEVEL_PROC) {
+         myprintf( "DEBUG: Leaving CALENDAR_put_record_in_API with record not found\n" );
+      }
       return;
    }
 
    strcpy( api_bufptr->API_Command_Response, API_RESPONSE_DATA );
    strcpy( api_bufptr->API_Command_Number, API_CMD_DUMP_FORMATTED );
    API_set_datalen( (API_Header_Def *)api_bufptr, sizeof(calendar_def) );
+   if (pSCHEDULER_CONFIG_FLAGS.debug_level.calendar >= DEBUG_LEVEL_PROC) {
+      myprintf( "DEBUG: Leaving CALENDAR_put_record_in_API OK\n" );
+   }
    return;
 } /* CALENDAR_put_record_in_API */
 
@@ -988,7 +997,7 @@ void CALENDAR_format_list_for_display( API_Header_Def * api_bufptr, FILE * tx ) 
          if (calbuffer->calendar_type == '0') {
             strcpy( type, "JOB    " );
          }
-		 else if (calbuffer->calendar_type == '1') {
+	 else if (calbuffer->calendar_type == '1') {
             strcpy( type, "HOLIDAY" );
          }
          tempstrbuflen = snprintf( tempstrbuf, 100, "%s %s %s %s\n",

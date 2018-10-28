@@ -8,7 +8,7 @@ NOTE: VERY GCC VERSION DEPENDANT, compiled and worked no probs on GCC3 up
 This document includes the following sections in the order below
 
   -- Documentation, where is it
-  -- IMPORATANT UPGRADE NOTES (NOT REQUIRED FOR NEW INSTALLS)
+  -- IMPORTANT UPGRADE NOTES (NOT REQUIRED FOR NEW INSTALLS)
   -- Security Recomendations
   -- Installation Quick Start For the Impatient
       - installing and starting
@@ -81,7 +81,7 @@ SCHED_BASE_DIR=/opt/dickinson/scheduler
 SCHED_BIN_DIR=/opt/dickinson/scheduler/bin
 SCHED_JOBLOG_DIR=/opt/dickinson/scheduler/joblogs
 EOF
-cp samples/alert_smaples/alerts_custom.txt /opt/dickinson/scheduler
+cp samples/alert_samples/alerts_custom.txt /opt/dickinson/scheduler
 # compile the programs; AND delete the temorary object files
 # created so git doesn't want to add them
 cd src
@@ -96,7 +96,7 @@ vi samples/initd/server.rc3_d  and customise the below three values
    prod_port_num='9002'    # port number application will use
    local_host="127.0.0.1"  #(refer to manual, and security notes above)
    installed_dir='/opt/dickinson/scheduler'
-cp samples/initd/server.rc3.d /etc/init.d/marks_job_scheduler
+cp samples/initd/server.rc3_d /etc/init.d/marks_job_scheduler
 chmod 755 /etc/init.d/marks_job_scheduler
 chkconfig --add marks_job_scheduler
 chkconfig marks_job_scheduler on
@@ -122,7 +122,7 @@ At the 'command:' prompt
 enter the below
 
   autologin
-  user add mark,password abcdefgh,auth admin,autoauth yes,subsetauth admin,desc "Mark Dickinson"
+  user add mark,password abcdefgh,auth admin,autoauth yes,subsetaddauth admin,desc "Mark Dickinson"
   login mark abcdefgh
 
 If the login as OK your new id can be used for admin functions instead

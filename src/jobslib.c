@@ -109,7 +109,7 @@ long JOBS_write_record( jobsfile_def * datarec, long recpos ) {
    }
    /* Check the fields in the record are legal */
    UTILS_space_fill_string( datarec->job_header.jobname, JOB_NAME_LEN );
-   strncpy( datarec->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
+   memcpy( datarec->job_header.jobnumber, "000000", JOB_NUMBER_LEN );
    datarec->description[JOB_DESC_LEN] = '\0';
 
    /* Write it */
@@ -515,7 +515,7 @@ void JOBS_format_listall_for_display_API( API_Header_Def * api_bufptr, FILE *tx 
       strcpy( api_bufptr->API_Data_Buffer, "*E* Insufficient free memory on server to execute this command\n" );
       API_set_datalen( (API_Header_Def *)api_bufptr, strlen(api_bufptr->API_Data_Buffer) );
       myprintf( "*ERR: JE006-Insufficicent memory for requested JOB operation (JOBS_format_listall_for_display_API)\n" );
-	  return;
+      return;
    }
    
    /*
@@ -542,8 +542,9 @@ void JOBS_format_listall_for_display_API( API_Header_Def * api_bufptr, FILE *tx 
    while ( (!(ferror(job_handle))) && (!(feof(job_handle))) ) {
       lasterror = fread( workbuffer, sizeof(jobsfile_def), 1, job_handle  );
       if (  (!(feof(job_handle))) && (workbuffer->job_header.info_flag != 'D')  ) {
-/* replace below with wildcard search */
-/*         if ( (masklen == 0) || (memcmp(workbuffer->job_header.jobname,mask,masklen) == 0) ) { */
+         if (pSCHEDULER_CONFIG_FLAGS.debug_level.jobslib >= DEBUG_LEVEL_IO) {
+            myprintf( "DEBUG: read job record %s\n", workbuffer->job_header.jobname );
+         }
          if ( (masklen == 0) || (UTILS_wildcard_parse_string(workbuffer->job_header.jobname,mask) == 1) ) {
             if (workbuffer->calendar_error == 'Y') {
                strncpy( workbuf2, "CALENDAR ERROR(EXPIRED?)", 48 );
@@ -565,7 +566,7 @@ void JOBS_format_listall_for_display_API( API_Header_Def * api_bufptr, FILE *tx 
                       workbuf2, workbuffer->description, extratext );
             API_add_to_api_databuf( api_bufptr, workbuf, worklen, tx );
          }
-	  } /* while not eof */
+      } /* while not eof */
    } /* while not a file error or eof */
 
    API_set_datalen( (API_Header_Def *)api_bufptr, strlen(api_bufptr->API_Data_Buffer) );
@@ -1038,7 +1039,7 @@ int JOBS_completed_job_time_adjustments( active_queue_def * datarec ) {
    /* NOW: update the job definition file with the new times */
    job_recordnum = JOBS_write_record( &local_rec, job_recordnum );
    if (job_recordnum == -1) {
-      snprintf( msgbuffer, 70, "JOB %s: UNABLE TO UPDATE JOB MASTER RECORD (JOBS_completed_job_time_adjustments)", datarec->job_header.jobname );
+      snprintf( msgbuffer, UTILS_MAX_ERRORTEXT, "JOB %s: UNABLE TO UPDATE JOB MASTER RECORD (JOBS_completed_job_time_adjustments)", datarec->job_header.jobname );
       UTILS_set_message( msgbuffer );
 	  myprintf( "*ERR: JE017-%s\n", msgbuffer );
 	  return_flag = 2;

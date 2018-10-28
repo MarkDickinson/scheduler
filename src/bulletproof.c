@@ -335,7 +335,7 @@ int BULLETPROOF_CALENDAR_record( calendar_def * datarec ) {
    }
 
    if (datarec->observe_holidays == 'Y') {
-      if (datarec->holiday_calendar_to_use == '\0') {
+      if (*datarec->holiday_calendar_to_use == '\0') {
          myprintf("*ERR: BE019-Job is to observe holidays but no holiday calendar was selected\n" );
          failed++; /* failed checks */
       }

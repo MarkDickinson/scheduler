@@ -67,7 +67,7 @@ int generate_banner( char * filename, char * filetype, int reclen ) {
    printf( "#           File name : %s\n", filename );
 
    if ( (stat_buf = malloc(sizeof(struct stat))) == NULL ) {
-      printf( "# ------> E R R O R <----- Insufficient free memory, cannot allocate %d bytes\n", sizeof(struct stat) );
+      printf( "# ------> E R R O R <----- Insufficient free memory, cannot allocate %d bytes\n", (int)sizeof(struct stat) );
       return(1);
    }
    lasterror = stat( filename, stat_buf );   /* if <> 0 an error, ENOENT if not there */
@@ -239,7 +239,7 @@ int JOBS_dump_job_file( char * jobsfile ) {
 
    /* Allocate memory for the jobsfile records */
    if ( (jobbuffer = malloc(sizeof(jobsfile_def))) == NULL) { 
-      printf(" *ERR: Unable to allocate %d bytes of memory\n", sizeof(jobsfile_def) );
+      printf(" *ERR: Unable to allocate %d bytes of memory\n", (int)sizeof(jobsfile_def) );
       fclose( job_handle );
       return( 1 );
    }
@@ -405,7 +405,7 @@ int USER_dump_user_file( char * userfile ) {
 
    /* Allocate memory for the user records */
    if ( (userbuffer = malloc(sizeof(USER_record_def))) == NULL) { 
-      printf(" *ERR: Unable to allocate %d bytes of memory\n", sizeof(USER_record_def) );
+      printf(" *ERR: Unable to allocate %d bytes of memory\n", (int)sizeof(USER_record_def) );
       fclose( user_handle );
       return( 1 );
    }
@@ -547,7 +547,7 @@ int CALENDAR_dump_calendar_file( char * calendarfile ) {
 
    /* Allocate memory for the calendar records */
    if ( (calbuffer = malloc(sizeof(calendar_def))) == NULL) { 
-      printf(" *ERR: Unable to allocate %d bytes of memory\n", sizeof(calendar_def) );
+      printf(" *ERR: Unable to allocate %d bytes of memory\n", (int)sizeof(calendar_def) );
       fclose( calendar_handle );
       return( 1 );
    }

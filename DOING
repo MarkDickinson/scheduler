@@ -1,6 +1,0 @@
-Cleaning up stuff identified by valgrind
-
-BUGS
-'alert info" with no jobname calls the server, gets alert record
-nit found ok but should be stopped by jobsched_cmd
-

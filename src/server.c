@@ -359,8 +359,8 @@ void clean_up_job_entry_table( pid_t * completed_job_pid, int status ) {
    strncpy( local_logrec.job_header.jobnumber, local_rec.job_header.jobnumber, JOB_NUMBER_LEN );
    strncpy( local_logrec.job_header.jobname, local_rec.job_header.jobname, JOB_NAME_LEN );
    local_logrec.job_header.jobname[JOB_NAME_LEN] = '\0';
-   strncpy( local_logrec.msgid, "0000000000", JOB_LOGMSGID_LEN );
-   strncpy( local_logrec.status_code, "000", JOB_STATUSCODE_LEN );
+   memcpy( local_logrec.msgid, "0000000000", JOB_LOGMSGID_LEN );
+   memcpy( local_logrec.status_code, "000", JOB_STATUSCODE_LEN );
 
    /* If job failed, we need to set it to a failed state and generate an
     * alert */
@@ -380,11 +380,11 @@ void clean_up_job_entry_table( pid_t * completed_job_pid, int status ) {
 	     /* mark the active queue record as a job in a failed state */
 	     local_rec.current_status = '3'; /* failure state */
 		 if (signal_killed != 0) {
-            strncpy( local_alert.failure_code, ALERTS_SYSTEM_GENERATED, JOB_STATUSCODE_LEN );
+            memcpy( local_alert.failure_code, ALERTS_SYSTEM_GENERATED, JOB_STATUSCODE_LEN );
 		    strncpy(local_logrec.status_code, "SIG", JOB_STATUSCODE_LEN+1 ); /* allow +1 for null to go in */
 		 }
 		 else {
-            strncpy( local_alert.failure_code, ALERTS_USER_GENERATED, JOB_STATUSCODE_LEN );
+            memcpy( local_alert.failure_code, ALERTS_USER_GENERATED, JOB_STATUSCODE_LEN );
             /* BUG: Doesn't correctly set three byte values, so use 9 byte
              * field and copy out what we need from that. */
 		    UTILS_number_to_string( exit_code, (char *)&test_buf, 9 );
@@ -397,7 +397,7 @@ void clean_up_job_entry_table( pid_t * completed_job_pid, int status ) {
             myprintf(  "*ERR: SE014-Unable to write active queue file failure info for %s\n", local_rec.job_header.jobname );
 	     }
 		 /* Create an alert record for the failure */
-		 strncpy( local_logrec.msgid, "0000003000", JOB_LOGMSGID_LEN );  /* use 3000 in failure range */
+		 memcpy( local_logrec.msgid, "0000003000", JOB_LOGMSGID_LEN );  /* use 3000 in failure range */
 		 local_alert.severity = '3'; /* page support */
 		 local_alert.acknowledged = 'N';
          /* was it terminated by a kill signal */
@@ -409,29 +409,29 @@ void clean_up_job_entry_table( pid_t * completed_job_pid, int status ) {
          else {
                if (exit_code == 98) {
                   snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: FAILED, UNDOCUMENTED SYSTEM TERMINATION", local_rec.job_header.jobname );
-                  strncpy( local_alert.failure_code, ALERTS_OS_ERROR, JOB_STATUSCODE_LEN );
+                  memcpy( local_alert.failure_code, ALERTS_OS_ERROR, JOB_STATUSCODE_LEN );
                }
 			   else if (exit_code == 99) {
                   snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: FAILED, UNABLE TO CHANGE UID TO JOB OWNER", local_rec.job_header.jobname );
-                  strncpy( local_alert.failure_code, ALERTS_USERNOTFOUND, JOB_STATUSCODE_LEN );
+                  memcpy( local_alert.failure_code, ALERTS_USERNOTFOUND, JOB_STATUSCODE_LEN );
                }
 			   else if (exit_code == 126) {
                   snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: FAILED, PROGRAM NOT EXECUTABLE", local_rec.job_header.jobname );
-                  strncpy( local_alert.failure_code, ALERTS_PGMNOTFOUND, JOB_STATUSCODE_LEN );
+                  memcpy( local_alert.failure_code, ALERTS_PGMNOTFOUND, JOB_STATUSCODE_LEN );
                }
 			   else if (exit_code == 127) {
                   snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: FAILED, PROGRAM NOT FOUND OR NOT RUNABLE", local_rec.job_header.jobname );
-                  strncpy( local_alert.failure_code, ALERTS_PGMNOTFOUND, JOB_STATUSCODE_LEN );
+                  memcpy( local_alert.failure_code, ALERTS_PGMNOTFOUND, JOB_STATUSCODE_LEN );
                }
                /* some user defined ones */
 			   else if ( (exit_code >= 150) || (exit_code <= 199) ) {
                   ALERTS_CUSTOM_set_alert_text( exit_code, (char *)&local_logrec.text, JOB_LOGMSG_LEN,
                                                 (char *)&local_alert.severity, (char *)&local_rec.job_header.jobname );
-                  strncpy( local_alert.failure_code, ALERTS_USER_CUSTOM, JOB_STATUSCODE_LEN );
+                  memcpy( local_alert.failure_code, ALERTS_USER_CUSTOM, JOB_STATUSCODE_LEN );
                }
 			   else {
                   snprintf( local_logrec.text, JOB_LOGMSG_LEN, "JOB %s: EXIT CODE=%d", local_rec.job_header.jobname, exit_code );
-                  strncpy( local_alert.failure_code, ALERTS_USER_GENERATED, JOB_STATUSCODE_LEN );
+                  memcpy( local_alert.failure_code, ALERTS_USER_GENERATED, JOB_STATUSCODE_LEN );
                }
          }
          /* End of response code checks */
@@ -2825,7 +2825,7 @@ void process_client_request_dep( FILE *tx, char *buffer ) {
 	     strcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR );
 	     datalen = snprintf( api_bufptr->API_Data_Buffer, (MAX_API_DATA_LEN - 1),
                            "UNABLE TO ALLOCATE %d BYTES OF MEMORY NEEDED FOR THIS OPERATION\n",
-						    sizeof(job_header_def)
+						    (int)sizeof(job_header_def)
 						  );
 	  }
 	  else {
@@ -2846,7 +2846,7 @@ void process_client_request_dep( FILE *tx, char *buffer ) {
 	     strcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR );
 	     datalen = snprintf( api_bufptr->API_Data_Buffer, (MAX_API_DATA_LEN - 1),
                            "UNABLE TO ALLOCATE %d BYTES OF MEMORY NEEDED FOR THIS OPERATION\n",
-						    sizeof(job_header_def)
+						    (int)sizeof(job_header_def)
 						  );
 	  }
 	  else {
@@ -2917,8 +2917,8 @@ void process_client_request_debug( FILE *tx, char *buffer ) {
 	  while (*ptr1 == ' ') ptr1++;  /* skip spaces to get to the subsys */
 	  ptr2 = ptr1;
 	  /* Now at 'subsys level' */
-	  while ((*ptr2 != ' ') && (ptr2 != '\0')) ptr2++;  /* skip spaces to get to the level */
-	  while ((*ptr2 == ' ') && (ptr2 != '\0')) ptr2++;  /* skip spaces to get to the level */
+	  while ((*ptr2 != ' ') && (*ptr2 != '\0')) ptr2++;  /* skip spaces to get to the level */
+	  while ((*ptr2 == ' ') && (*ptr2 != '\0')) ptr2++;  /* skip spaces to get to the level */
 	  if (ptr2 == ptr1) {
 	     strcpy( api_bufptr->API_Command_Response, API_RESPONSE_ERROR );
 	     strcpy( api_bufptr->API_Data_Buffer, "NO DEBUGLEVEL PROVIDED IN DEBUG REQUEST\n" );

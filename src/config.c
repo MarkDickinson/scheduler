@@ -73,7 +73,7 @@ int CONFIG_Initialise( internal_flags * flagbuffer ) {
       strncpy( flagbuffer->version, config_version, 40 );
       flagbuffer->catchup_flag = '2';    /* default is catchup all days */
       flagbuffer->log_level = 2;
-      strncpy( flagbuffer->new_day_time, "06:00", 5 ); 
+      memcpy( flagbuffer->new_day_time, "06:00", 5 ); 
       strncpy( flagbuffer->last_new_day_run, "20020101 06:00", 17 );
       time_work = UTILS_timenow_timestamp();
       /* then ensure its after the current time, newday is in the future */

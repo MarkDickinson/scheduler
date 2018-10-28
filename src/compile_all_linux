@@ -4,7 +4,7 @@
 #
 # ASSUMPTIONS: You already have a directory structure in place
 #              for the job scheduler from a previous install.
-# 
+#
 #
 MAXCC=0
 ## ------------------------------------------------------------------------
@@ -15,8 +15,8 @@ installdir=$1
 if [ "${installdir}." = "." ];
 then
    # targetdir="/opt/dickinson/js_testing/bin"
-   installdir="/opt/dickinson/job_scheduler"
-   targetdir="/opt/dickinson/job_scheduler/bin"
+   installdir="/opt/dickinson/scheduler"
+   targetdir="/opt/dickinson/scheduler/bin"
 else
    targetdir="${installdir}/bin"
 fi
@@ -83,29 +83,29 @@ testcc() {
 ## Build the main application.
 ## ------------------------------------------------------------------------
 echo "Compiling server modules, wait..."
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused alerts.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation alerts.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type calendar.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation calendar.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused config.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation -Wno-unused config.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type jobslib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation jobslib.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused schedlib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation schedlib.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type utils.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation utils.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused api.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation api.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused server.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation server.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type bulletproof.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation bulletproof.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type users.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation users.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type calendar_utils.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation calendar_utils.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type memorylib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation memorylib.c
 testcc $?
 gcc -ggdb3 alerts.o calendar.o config.o jobslib.o schedlib.o \
  utils.o api.o server.o bulletproof.o \

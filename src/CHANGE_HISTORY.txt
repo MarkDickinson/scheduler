@@ -16,9 +16,24 @@ Change Type Key: (S) Security change
                  (N) New program included
 
 
+Fixes Since V1.16
+-----------------
+None: Version V1.16 is this release.
+
 Fixes Since V1.15
 -----------------
-None: Version V1.15 is this release.
+2018/10/27 - (*) Lots of changes to get it to compile on FC28 with GCC 8.1.1
+             (*) Commented out one line in api.c Set_LF processing that was
+                 causing jobsched_cmd to segfault when processing the response.
+             (+) For GCC 8.1.1
+                 Changed a log of valid strncpy statements to use memcpy in cases
+                 where data contents were known to supress a lot of warnings
+                 when truncation was desired. Changed some pointer references
+                 to suppress further warning messages.
+                 Still a lot of warnings for snprintf and strncpy statements
+                 but they are deliberate truncations and not an issue.
+                 Added a few extra tweaks to debugging level code to help
+                 track down problems.
 
 Fixes Since V1.14
 -----------------

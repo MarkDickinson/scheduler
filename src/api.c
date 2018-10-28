@@ -82,7 +82,7 @@ void API_DEBUG_dump_api( API_Header_Def *pAPI_buffer ) {
 		   char API_Data_Buffer[MAX_API_DATA_LEN];
 		*/
    char buffer[4097];
-   int  iInt;
+   int  i, iInt;
    API_Header_Def * local_API_buffer;
 
    if (pSCHEDULER_CONFIG_FLAGS.debug_level.api >= DEBUG_LEVEL_PROC) {
@@ -125,17 +125,21 @@ void API_DEBUG_dump_api( API_Header_Def *pAPI_buffer ) {
    buffer[3] = '\0';
    myprintf( "  API Response: %s\n", buffer );
    myprintf( "  Data Follows: %c\n", local_API_buffer->API_More_Data_Follows );
-   strncpy( buffer, local_API_buffer->API_Data_Len, DATA_LEN_FIELD );
+   strncpy( buffer, local_API_buffer->API_Data_Len, DATA_LEN_FIELD ); 
    buffer[DATA_LEN_FIELD] = '\0';
    iInt = atoi( buffer );
    myprintf( "  databuf len : %d\n", iInt );
    if (iInt > 0) {
       if (iInt > 4096) {
-		   iInt = 4096;
+         iInt = 4096;
       }
       myprintf( "  adjusted len: %d\n", iInt );
-      strncpy( buffer, local_API_buffer->API_Data_Buffer, iInt );
-	  buffer[iInt] = '\0';
+/*      strncpy( buffer, local_API_buffer->API_Data_Buffer, iInt );   */
+      memcpy( buffer, local_API_buffer->API_Data_Buffer, iInt );
+      for (i = 0; i < iInt; i++) {
+         if (buffer[i] == '\0') { buffer[i] = '^'; }
+      }
+      buffer[iInt] = '\0';
       myprintf( "  Data Buffer : %s\n", buffer );
    }
    myprintf( "------------------------------------------------------\n" );
@@ -228,27 +232,26 @@ int API_add_to_api_databuf( API_Header_Def * pApi_buffer, char * datastr,
        if (pApi_buffer->API_More_Data_Follows == '0') {
            pApi_buffer->API_More_Data_Follows = '1';
        }
-	   /* else set to 3 which is continuation with still more data following */
-	   else {
-	       pApi_buffer->API_More_Data_Follows = '3';
-	   }
-	   sptr = (char *)&pApi_buffer->API_EyeCatcher;
-	   eptr = (char *)&pApi_buffer->API_Data_Buffer;
-	   replylen = (eptr - sptr) + iInt;
+       /* else set to 3 which is continuation with still more data following */
+       else {
+           pApi_buffer->API_More_Data_Follows = '3';
+       }
+       sptr = (char *)&pApi_buffer->API_EyeCatcher;
+       eptr = (char *)&pApi_buffer->API_Data_Buffer;
+       replylen = (eptr - sptr) + iInt;
        API_sethostname_field( pApi_buffer ); /* set the hostname doing the write */
-	   z = fwrite( pApi_buffer, replylen, 1, tx );
-	   if (ferror(tx)) {
-		  myprintf( "*ERR: SE002-API_add_to_api_databuf, Unable to write data buffer block of a continuation stream\n" );
-	      return( 1 );  /* ERROR OCCURRED */
-	   }
-	   myprintf( "DEBUG3: Flushed first buffer block, more to follow\n" );
-	   if (pSCHEDULER_CONFIG_FLAGS.debug_level.api >= DEBUG_LEVEL_IO) {
-	      myprintf( "DEBUG: API_add_to_api_databuf, flushed first buffer, more to write to client\n" );
-	   }
-	   /* if the write was OK clear the data buffer */
-	   pApi_buffer->API_Data_Buffer[0] = '\0';
+       z = fwrite( pApi_buffer, replylen, 1, tx );
+       if (ferror(tx)) {
+          myprintf( "*ERR: SE002-API_add_to_api_databuf, Unable to write data buffer block of a continuation stream\n" );
+          return( 1 );  /* ERROR OCCURRED */
+       }
+       if (pSCHEDULER_CONFIG_FLAGS.debug_level.api >= DEBUG_LEVEL_IO) {
+          myprintf( "DEBUG: API_add_to_api_databuf, flushed first buffer, more to write to client\n" );
+       }
+       /* if the write was OK clear the data buffer */
+       pApi_buffer->API_Data_Buffer[0] = '\0';
        iInt = 0;
-	}
+    }
 
     strncpy( local_datastr, datastr, datalen );
     local_datastr[datalen] = '\0';
@@ -257,10 +260,10 @@ int API_add_to_api_databuf( API_Header_Def * pApi_buffer, char * datastr,
     API_set_datalen( pApi_buffer, iInt );
 	
    if (pSCHEDULER_CONFIG_FLAGS.debug_level.api >= DEBUG_LEVEL_PROC) {
-      myprintf( "DEBUG: Leaving API_add_to_api_databuf\n" );
+      myprintf( "DEBUG: Leaving API_add_to_api_databuf, bufferlen=%d \n", iInt );
    }
 
-	return( 0 );  /* no error */
+   return( 0 );  /* no error */
 } /* API_add_to_api_databuf */
 
 /* --------------------------------------------------------------
@@ -301,6 +304,8 @@ int API_flush_buffer( API_Header_Def * pApi_buffer, FILE * fhandle ) {
  * This differs from API_Nullterm_Fields in that we expect our buffer to be
  * a response display buffer, so we place a LF at the first char before null
  * filling rather than a total null fill done by API_Nullterm_Fields.
+ * Newline fields are indicated by the ^ character in the data buffer, we set 
+ * all ^ characters to '\n' in the response data buffer.
    ***************************************************************************** */
 void API_Set_LF_Fields( API_Header_Def * api_bufptr ) {
 		/* 
@@ -336,25 +341,18 @@ void API_Set_LF_Fields( API_Header_Def * api_bufptr ) {
    api_bufptr->API_Command_Number[API_CMD_LEN] = '\0';
    api_bufptr->API_Command_Response[3] = '\0';
    api_bufptr->API_Data_Len[DATA_LEN_FIELD] = '\0';
+/* CRITICAL !!!!  The below line causes segmentation faults in jobsched_cmd response processing !!!!
    api_bufptr->API_Data_Buffer[MAX_API_DATA_LEN - 2] = '\0';
+*/
 
    j = atoi( api_bufptr->API_Data_Len );
-   if (j == 0) { j = strlen(api_bufptr->API_Data_Len); } /* server may have hiccuped */
-   if (j >= (MAX_API_DATA_LEN - 1)) {
-		   j = MAX_API_DATA_LEN - 1;
-   }
-   found_one = 0;
+   if (j == 0) { j = strlen(api_bufptr->API_Data_Len); }
+   if (j >= (MAX_API_DATA_LEN - 2)) { j = MAX_API_DATA_LEN - 2; }
+   api_bufptr->API_Data_Buffer[j+1] = '\0';
    for (i = 0; i < j; i++) {
-		   if (api_bufptr->API_Data_Buffer[i] == '^') {
-		      if (found_one == 0) {
-			     found_one = 1;
-			     api_bufptr->API_Data_Buffer[i] = '\n';
-			  }
-			  else {
-			     api_bufptr->API_Data_Buffer[i] = '\0';
-			  }
-		   }
-		   else { found_one = 0; }
+      if (api_bufptr->API_Data_Buffer[i] == '^') {
+         api_bufptr->API_Data_Buffer[i] = '\n';
+      }
    }
 
    if (pSCHEDULER_CONFIG_FLAGS.debug_level.api >= DEBUG_LEVEL_PROC) {

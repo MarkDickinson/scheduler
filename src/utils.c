@@ -1338,8 +1338,8 @@ void myprintf( const char *fmt, ... ) {
 		time_t time_now;
 		char time_now_text[50];
 
-		if ( (p = malloc(512)) == 0 ) { /* don't expect, or allow msgs > 511 bytes */
-				fprintf( stdout, "Unable to allocate 512 bytes of memory for message display\n" );
+		if ( (p = malloc(1024)) == 0 ) { /* don't expect, or allow msgs > 1023 bytes */
+				fprintf( stdout, "Unable to allocate 1024 bytes of memory for message display\n" );
 				return;  /* can't even log an error */
 		}
 
@@ -1353,12 +1353,12 @@ void myprintf( const char *fmt, ... ) {
 		 * we are being called with printf parameters
 		 */
          va_start(ap,fmt);
-         n = vsnprintf( p, 511, fmt, ap );   /* allowing only 511 bytes so we can have a null in 512 */
+         n = vsnprintf( p, 1023, fmt, ap );   /* allowing only 511 bytes so we can have a null in 1024 */
          va_end(ap);
 
          /* n will be -1 on errors from vsnprintf, or may be > buffsize to be
           * used if it is not going to fit in the buffer */
-         if ((n > -1) && (n < 511)) {
+         if ((n > -1) && (n < 1023)) {
 		    if (msg_log_handle != NULL) {  /* Log file is open */
 		       time_now = time(0);
 		       snprintf( time_now_text, 49, "%s", ctime(&time_now) );
@@ -1378,9 +1378,9 @@ void myprintf( const char *fmt, ... ) {
 			}
          }
          else {
-	     	myprintf( "*ERR: Message of > 512 bytes passed, discarded\n" );
+	     	myprintf( "*ERR: Message of > 1023 bytes passed, discarded\n" );
          }
-		 free(p);
+	 free(p);
 }  /* myprintf */
 
 /* ---------------------------------------------------
