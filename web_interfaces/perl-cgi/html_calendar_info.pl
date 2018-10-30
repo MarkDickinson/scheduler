@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-require "cgi-lib.pl";
-require "scheduler-lib.pl";
+require "./cgi-lib.pl";
+require "./scheduler-lib.pl";
 
 #
 # Display details for a calendar, we expect to be passed
@@ -39,8 +39,8 @@ if ($pid == 0) {
 @result = <PIPE>;
 for (@result) {
     next if /command:/;
-    next if /GPL Release - this program is not warranted in any way, you use this/;
-    next if /              application at your own risk. Refer to the GPL license./;
+    next if /GPL V2 Release - this program is not warranted in any way, you use this/;
+    next if /                 application at your own risk. Refer to the GPL V2 license./;
     $dataline = substr( $_, 0, length($_) );
     $test=substr($dataline,0,8);
     print ${dataline};

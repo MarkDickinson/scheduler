@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-require "cgi-lib.pl";
-require "scheduler-lib.pl";
+require "./cgi-lib.pl";
+require "./scheduler-lib.pl";
 
 # If no input in two minutes return to job status display.
 print &PrintHeader;
@@ -32,7 +32,7 @@ print " Run the job now. Only effective if the job is in a time-wait state.<br>\
 print "<br><br>\n";
 $urlname = "${execurl}?DELETE=".${jobname}."=".${ipaddr};
 &scheduler_add_hot_button( 'Button_Delete_Blue.jpg', 'Button_Delete_Red.jpg', ${urlname}, 'Btn4' );
-print " Delete the job from the scheduker active queue. <em>See considerations below</em>.<br>\n";
+print " Delete the job from the scheduler active queue. <em>See considerations below</em>.<br>\n";
 print "<br><em>Considerations for deleting a job</em><br>It is important to note that you should only ever\n";
 print "delete a job on the request of your systems administrator. Deleteing a job will remove\n";
 print "it from the active queue <b>but will not update the job last/next runtime flags</b> as\n";

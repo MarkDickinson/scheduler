@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-require "cgi-lib.pl";
-require "scheduler-lib.pl";
+require "./cgi-lib.pl";
+require "./scheduler-lib.pl";
 
 # GLOBAL alertcount
 $ALERTCOUNT = 0;
@@ -27,8 +27,8 @@ sub issue_alert_command() {
    @result = <PIPE>;
    for (@result) {
        next if /command:/;
-       next if /GPL Release - this program is not warranted in any way, you use this/;
-       next if /              application at your own risk. Refer to the GPL license./;
+       next if /GPL V2 Release - this program is not warranted in any way, you use this/;
+       next if /                 application at your own risk. Refer to the GPL V2 license./;
        # Don't bother showing command results here.
 #          $dataline = substr( $_, 0, length($_) ); 
 #          if (length($dataline) > 3) {
@@ -61,8 +61,8 @@ sub SHOW_ALERTS() {
    $btncount = 0;
    for (@result) {
        next if /command:/;
-       next if /GPL Release - this program is not warranted in any way, you use this/;
-       next if /              application at your own risk. Refer to the GPL license./;
+       next if /GPL V2 Release - this program is not warranted in any way, you use this/;
+       next if /                 application at your own risk. Refer to the GPL V2 license./;
        $dataline = substr( $_, 0, (length($_) - 1) ); # -1 to drop lf byte
        $test = substr( $dataline, 1, 5 );
        $testfail = substr( $dataline, 0, 18 );

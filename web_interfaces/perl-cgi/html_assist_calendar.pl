@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-require "cgi-lib.pl";
-require "scheduler-lib.pl";
+require "./cgi-lib.pl";
+require "./scheduler-lib.pl";
 
 $submit_required = 0; # Nothing to write by default
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-require "cgi-lib.pl";
-require "scheduler-lib.pl";
+require "./cgi-lib.pl";
+require "./scheduler-lib.pl";
 
 sub SCHED_status_display() {
     local $ipaddr = $_[0];
@@ -26,8 +26,8 @@ sub SCHED_status_display() {
     print "<hr><br><pre>";
     for (@result) {
         next if /command:/;
-        next if /GPL Release - this program is not warranted in any way, you use this/;
-        next if /              application at your own risk. Refer to the GPL license./;
+        next if /GPL V2 Release - this program is not warranted in any way, you use this/;
+        next if /                 application at your own risk. Refer to the GPL V2 license./;
         $dataline = substr( $_, 0, length($_) );
 	print "${dataline}";
     }

@@ -8,7 +8,7 @@
 # The directory the scheduler cgi-bin files are located in
 # Must be a legal path based on your httpd.conf cgi-bin path.
 sub scheduler_HTTPD_Home {
-  return "http://falcon/cgi-bin/system/scheduler";
+  return "http://myservername/cgi-bin/scheduler";
 }
 
 # The default port number to be used to communicate with the schedulers
@@ -19,7 +19,7 @@ sub scheduler_port {
 # The location of the scheduler command program
 sub scheduler_cmdprog {
   my $useport=&scheduler_port();
-  return "/opt/dickinson/job_scheduler/bin/jobsched_cmd ${useport}";
+  return "/opt/dickinson/scheduler/bin/jobsched_cmd ${useport}";
 }
 
 # The entry added to httpd.conf to idendify where scheduler icons are
@@ -332,15 +332,17 @@ sub scheduler_system_list() {
   # a check for each system you intend to monitor.
   # The below set are what I tested on. Change as needed.
   #
-  local $sysnamecount  = 1;
+  local $sysnamecount  = 4;
   #
   # A list of systems, one pair for each sysnamecount
-  local $hostname1     = "falcon";
-  local $ipaddr1       = "169.254.218.183";
-  local $hostname2     = "nic";
-  local $ipaddr2       = "169.254.218.185";
-  local $hostname3     = "amber";
-  local $ipaddr3       = "169.254.218.184";
+  local $hostname1     = "vosprey2";
+  local $ipaddr1       = "192.168.1.189";
+  local $hostname2     = "phoenix";
+  local $ipaddr2       = "192.168.1.187";
+  local $hostname3     = "vmhost3";
+  local $ipaddr3       = "192.168.1.179";
+  local $hostname4     = "vmhost1";
+  local $ipaddr4       = "192.168.1.181";
   # Catchall if not customised correctly, also used for 0 systems (localhost)
   local $localhostip   = "127.0.0.1";
   local $localhostname = "localhost";
@@ -362,6 +364,9 @@ sub scheduler_system_list() {
      elsif ($dataidx == 3) {
         return( $hostname3 );
      }
+     elsif ($dataidx == 4) {
+        return( $hostname4 );
+     }
      # default (0)
      else {
         return( $localhostname );
@@ -379,6 +384,9 @@ sub scheduler_system_list() {
      }
      elsif ($dataidx == 3) {
         return( $ipaddr3 );
+     }
+     elsif ($dataidx == 4) {
+        return( $ipaddr4 );
      }
      # default (0)
      else {

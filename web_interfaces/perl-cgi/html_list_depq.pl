@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-require "cgi-lib.pl";
-require "scheduler-lib.pl";
+require "./cgi-lib.pl";
+require "./scheduler-lib.pl";
 
 print &PrintHeader;
 &scheduler_common_header( "html_job_status.pl", 120000 );
@@ -29,8 +29,8 @@ sub issue_command() {
    print "<pre>";
    for (@result) {
       next if /command:/;
-      next if /GPL Release - this program is not warranted in any way, you use this/;
-      next if /              application at your own risk. Refer to the GPL license./;
+      next if /GPL V2 Release - this program is not warranted in any way, you use this/;
+      next if /                 application at your own risk. Refer to the GPL V2 license./;
 # only used for debugging
 #       $dataline = substr( $_, 0, length($_) );
 #       $dataline = substr( $_, 0, length($_) );
@@ -77,8 +77,8 @@ sub DEPENDENCIES_listall() {
    @result = <PIPE>;
    for (@result) {
        next if /command:/;
-       next if /GPL Release - this program is not warranted in any way, you use this/;
-       next if /              application at your own risk. Refer to the GPL license./;
+       next if /GPL V2 Release - this program is not warranted in any way, you use this/;
+       next if /                 application at your own risk. Refer to the GPL V2 license./;
        $dataline = substr( $_, 0, (length($_) - 1) ); # -1 to strip lf
        $test1 = substr( $dataline, 0, 3 );
        $test2 = substr( $dataline, 4, 3 );

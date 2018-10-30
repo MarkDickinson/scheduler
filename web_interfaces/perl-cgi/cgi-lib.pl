@@ -177,16 +177,17 @@ sub CgiDie {
 sub PrintVariables {
   local (%in) = @_;
   local ($old, $out, $output);
-  $old = $*;  $* =1;
+##  $old = $*;  $* =1;                       MID2018 $* no longer supported from perl 5.3.0
   $output .=  "\n<dl compact>\n";
   foreach $key (sort keys(%in)) {
     foreach (split("\0", $in{$key})) {
-      ($out = $_) =~ s/\n/<br>\n/g;
+##      ($out = $_) =~ s/\n/<br>\n/g;        MID2018 $* no longer supported from perl 5.3.0
+      ($out = $_) =~ s/\n/<br>\n/gsm;
       $output .=  "<dt><b>$key</b>\n <dd><i>$out</i><br>\n";
     }
   }
   $output .=  "</dl>\n";
-  $* = $old;
+##  $* = $old;                              MID2018 $* no longer supported from perl 5.3.0
 
   return $output;
 }
