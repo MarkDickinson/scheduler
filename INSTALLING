@@ -4,6 +4,7 @@ YOUR MILAGE ON OTHER DISTRIBUTIONS MAY VARY.
 NOTE: VERY GCC VERSION DEPENDANT, compiled and worked no probs on GCC3 up
       to FC3, compiled cleanly but did not work from FC4-FC13 on GCC4,
       compiles cleanly and works again from FC14 onward with GCC4. Wierd.
+      Currently tested OK on Fedora28, compiler: gcc (GCC) 8.1.1 20180712 (Red Hat 8.1.1-5)
 
 This document includes the following sections in the order below
 
@@ -45,7 +46,8 @@ Security Recomendations
 Read the security manual (PDF in doc/PDF directory). By default the
 application is pretty wide open to ip-traffic and has configurations
 that can allow valid users to exploit. The default configuration is
-for an internal network with minimal security requirements.
+to bind on all interfaces for an internal network with minimal security
+requirements.
 
 Installation Quick Start For the Impatient
 ==========================================
@@ -61,6 +63,7 @@ structure required, compile the programs, customise and install the
 init.d script; and goodness, even create an uninstall script.
 If you want to do it that way just run ./lazy_install.sh
 but you will have no idea of what is going on.
+This is not recomended !.
 
 The manual way
 ..............
@@ -94,7 +97,7 @@ chown -R mark:mark /opt/dickinson/scheduler
 # MANUAL STEP
 vi samples/initd/server.rc3_d  and customise the below three values
    prod_port_num='9002'    # port number application will use
-   local_host="127.0.0.1"  #(refer to manual, and security notes above)
+   local_host="127.0.0.1"  #(refer to manual, and security notes)
    installed_dir='/opt/dickinson/scheduler'
 cp samples/initd/server.rc3_d /etc/init.d/marks_job_scheduler
 chmod 755 /etc/init.d/marks_job_scheduler
@@ -118,7 +121,7 @@ need to use root to manage the scheduler
 /opt/dickinson/scheduler/bin/jobsched_cmd
 
 At the 'command:' prompt
-(use your own unix userid and any password, not your unix one)
+(use your own unix userid and any password, not your unix password)
 enter the below
 
   autologin
@@ -138,4 +141,42 @@ While you are logged in you may as well also
 
 And may want to investigate the online 'help command'
 To exit either enter the command 'exit', or make any typing mistake :-)
+
+Optional installation of web interfaces
+=======================================
+There are two provided web interfaces targeted at different audiences
+- web-interfaces/perl-cgi
+- web-interfaces/tomcat      (tested using both Tomcat and Jetty)
+
+The perl-cgi interface is targeted at operators managing the days active
+job schedule. As it is a cgi interface running under the generic 'apache' 
+userid it is not permitted to update any database entries (job/calendar/user etc)
+but is only permitted to manage active scheduled jobs
+(hold/release/runnow/delete off active queue/clear dependencies etc)
+This can be performance intensive as for every person running this interface
+the poll interval requires new connections to be created/destroyed to each
+remote job scheduler.
+
+The J2EE interface (tested under tomcat and jetty) is for administrators
+and security groups. It requires that users login to the scheduler using
+their personal scheduler userids (meaning the server can enforce it's security
+roles on those users). As well as providing all the functions of the cgi 
+interface it allows for the global management of jobs/calendars/users etc
+across all configured servers.
+Apart from the overhead of running Jetty (or the larger overhead of running
+Tomcat) on the webserver, there is far less load on the remote job server hosts
+as this interface maintains a constant 'pool' of connections to each remote
+job server that are shared between all users of this web interface.
+
+Summary
+perl-cgi: operator access commands only, all commands issued under the apache id,
+          multiple remote job scheduler connect/disconnects per user, high overhead.
+J2EE    : access based on authority granted to the user logging on, full function,
+          (N defined in config) N permanent connections to remote job schedulers
+          created and kept open, shared between all users of this interface.
+
+There are install instructions for each in the relevant directories.
+These are optional.
+
+
 

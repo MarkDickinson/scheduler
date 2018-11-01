@@ -2,8 +2,8 @@ History:
   The CGI interface was OK for operations monitoring, but as there was no real
   user tracking (all cgi scripts ran under the apache id) the admin functions
   were never added to the cgi interface.
-  Tomcat with it's session tracking should allow each job scheduler user to
-  login as their real scheduler userid, and allow a full function interface.
+  The J2EE/JSP interface forces users to logon with their real scheduler userids
+  so allows a full function interface.
   [ Real reason: I wanted to play with JSP pages ]
 
 Nov 2003, Installed Tomcat and started porting the CGI interface to JSP.
@@ -12,6 +12,9 @@ Feb 2004, All CGI functions ported. Working on new functionality.
 Mar 2004, All common command line functions now available through the JSP interface.
 Mar 2004, Added a buffer check and if required a delay when reading replies from
           servers (sometimes was reading before data had been fully read back).
+Nov 2018, Re-tested under Jetty (as I now use Jetty insterad of Tomcat as Jetty has
+          a much smaller footprint) to make sure it still worked after quite a few
+          server changes.
 
 KNOWN ISSUES:
 1. Offset error from one of the command screens (can't remember which and
@@ -23,4 +26,3 @@ KNOWN ISSUES:
 
 WORK TO DO:
 1. Add online help
-2. Add scheduler control and debugging options ?
