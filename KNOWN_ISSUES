@@ -1,0 +1,53 @@
+I consider this an error with the systemd environment rather than with the
+job scheduler itself. As such I will npt be spending any further time looking
+into it.
+The issue is systemd cannot start the job scheduler using the startup script,
+running the startup script manually works.
+
+The impact of this issue is simply that after rebooting a server you must manually
+run the startup script from /etc/rc.d/init.d to start the job scheduler.
+
+More details...
+
+On systemd servers (ie:fedora) the SYSV init.d scripts are mapped to systemctl
+services at system initialisation time in an attempt at compatability to allow
+them to start as normal.
+The systemd environment as currently implemented cannot start the job scheduler,
+as seen below it says it started it but no job scheduler is running at the end
+of the systemd startup; and no messages are logged to the scheduler log file
+indicating it made any attempt to start.
+
+[root@phoenix init.d]# systemctl status marks_job_scheduler
+● marks_job_scheduler.service - SYSV: Marks job scheduler
+   Loaded: loaded (/etc/rc.d/init.d/marks_job_scheduler; generated)
+   Active: active (exited) since Sun 2019-02-10 11:40:01 NZDT; 4min 22s ago
+     Docs: man:systemd-sysv-generator(8)
+
+Feb 10 11:40:01 phoenix systemd[1]: Starting SYSV: Marks job scheduler...
+Feb 10 11:40:01 phoenix systemd[1]: Started SYSV: Marks job scheduler.
+
+[root@phoenix init.d]# ps -ef | grep sched
+root        10     2  0 Feb01 ?        00:01:21 [rcu_sched]
+root      6938  5044  0 11:44 pts/1    00:00:00 grep --color=auto sched
+
+
+
+However running exactly the same init.d script manually works perfectly,
+the scheduler starts and happily uses its log file.
+
+[root@phoenix init.d]# ./marks_job_scheduler start
+
+[root@phoenix init.d]# echo $?
+0
+[root@phoenix init.d]# ps -ef | grep sched
+root        10     2  0 Feb01 ?        00:01:21 [rcu_sched]
+root      7068     1  0 11:45 ?        00:00:00 bin/jobsched_daemon 9002
+root      7094  5044  0 11:45 pts/1    00:00:00 grep --color=auto sched
+[root@phoenix init.d]# 
+
+
+
+In summary there are no issues with the job scheduler, there is an issue in
+that systemd cannot start the job scheduler, but the resolution is simply to
+run the /etc/rc.d/init.d script manually as that bypasses whatever issues
+systemd has with starting the scheduler when it uses the same script.

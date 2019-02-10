@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # chkconfig: 35 99 10
 # description: Marks job scheduler
 # ---------------------------------------------------------
