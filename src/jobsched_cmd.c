@@ -430,6 +430,7 @@ int job_updatejobbuffer( char *pCmdstring, jobsfile_def *pJobRecord ) {
    char sTestParmValue2[100];
    int nFieldLen, nLeadingPads, nOverrunFlag, endofdata, depcount, i, j;
    char *pSptr, *pSptr2, *workptr;
+   char sRepeatLenWork[JOB_REPEATLEN+1];
 
    pSptr = pCmdstring;
 
@@ -525,13 +526,13 @@ int job_updatejobbuffer( char *pCmdstring, jobsfile_def *pJobRecord ) {
 					   printf( "*E* REPEATEVERY VALUE IGNORED, CANNOT BE < 5 (MINUTES)\n" );
 			   }
 			   else {
-					   pJobRecord->use_calendar = '3';  /* repeat type */
-					   /* pJobRecord->requeue_mins = i; a string now */
-                       UTILS_number_to_string( i, (char *)&pJobRecord->requeue_mins, JOB_REPEATLEN );
-                       pJobRecord->requeue_mins[JOB_REPEATLEN] = '\0'; /* null terminate it */
+				pJobRecord->use_calendar = '3';  /* repeat type */
+				/* pJobRecord->requeue_mins = i; a string now */
+				snprintf( sRepeatLenWork, JOB_REPEATLEN+1, "%d", i );
+				memcpy( pJobRecord->requeue_mins, sRepeatLenWork, JOB_REPEATLEN );
 			   }
 #ifdef DEBUG_MODE_ON
-               printf( "DEBUG: in job_updatejobbuffer (checking repeatevery), integer was %d\n", i );
+               printf( "DEBUG: in job_updatejobbuffer (checking repeatevery), integer was %d, new string value was %s\n", i, pJobRecord->requeue_mins );
 #endif
 			}
             else if (memcmp(sTestParmName, "CATCHUP", 7) == 0) {

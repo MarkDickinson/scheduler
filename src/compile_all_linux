@@ -89,15 +89,15 @@ gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation calendar.c
 testcc $?
 gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation -Wno-unused config.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation jobslib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation -Wno-format-truncation jobslib.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation schedlib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation -Wno-format-truncation schedlib.c
 testcc $?
 gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation utils.c
 testcc $?
 gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation api.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation server.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation -Wno-format-truncation server.c
 testcc $?
 gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation bulletproof.c
 testcc $?
@@ -122,7 +122,7 @@ testcc $?
 ## Build some utility tools
 ## ------------------------------------------------------------------------
 echo "Building utility tools, wait..."
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type jobsched_take_snapshot.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-format-truncation jobsched_take_snapshot.c
 testcc $?
 gcc -ggdb3 utils.o memorylib.o jobsched_take_snapshot.o -o ${targetdir}/jobsched_take_snapshot
 testcc $?

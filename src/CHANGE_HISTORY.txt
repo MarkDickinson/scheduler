@@ -16,9 +16,18 @@ Change Type Key: (S) Security change
                  (N) New program included
 
 
+Fixes Since V1.17
+-----------------
+None: Version V1.17 is this release.
+
 Fixes Since V1.16
 -----------------
-None: Version V1.16 is this release.
+2019/07/24 - (*) Changes in jobsched_cmd to fix an error in
+                 in converting the repeatevery value, reguardless
+                 of the user input value jobsched_cmd always put a
+                 value 010 in the data buffer. It now populates that
+                 value in th data buffer sent to the server to add
+                 the job with the correct user supplied value.
 
 Fixes Since V1.15
 -----------------
