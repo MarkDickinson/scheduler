@@ -41,9 +41,13 @@ public class SCHEDPoolWrapper implements Serializable {
    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    // Change the below for your site
    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   int countOfHosts = 4;
-   String arrayOfHosts[] = { "vmhost1", "vmhost3", "vosprey2", "phoenix" };
-   int arrayOfPorts[] =    { 9002, 9002, 9002, 9002 };
+   // int countOfHosts = 4;
+   // String arrayOfHosts[] = { "vmhost1", "vmhost3", "vosprey2", "phoenix" };
+   // int arrayOfPorts[] =    { 9002, 9002, 9002, 9002 };
+   // int socketsPerHost = 5;
+   int countOfHosts = 1;
+   String arrayOfHosts[] = { "localhost" };
+   int arrayOfPorts[] =    { 9002 };
    int socketsPerHost = 5;
    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    // Change the above for your site
