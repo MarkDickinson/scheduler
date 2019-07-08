@@ -8,7 +8,7 @@
 # The directory the scheduler cgi-bin files are located in
 # Must be a legal path based on your httpd.conf cgi-bin path.
 sub scheduler_HTTPD_Home {
-  return "http://myservername/cgi-bin/scheduler";
+  return "http://localhost/cgi-bin/scheduler";
 }
 
 # The default port number to be used to communicate with the schedulers
@@ -325,14 +325,14 @@ sub scheduler_system_list() {
   # This ensures the routines that use this
   # procedure work correctly on localhost.
   #
-  # local $sysnamecount  = 0;
+  local $sysnamecount  = 0;
   #
   # Changing the above value from 0 means you MUST update
   # the system list and list if elsif below to include
   # a check for each system you intend to monitor.
   # The below set are what I tested on. Change as needed.
   #
-  local $sysnamecount  = 4;
+#  local $sysnamecount  = 4;
   #
   # A list of systems, one pair for each sysnamecount
   local $hostname1     = "vosprey2";
