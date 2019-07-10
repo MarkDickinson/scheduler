@@ -15,24 +15,33 @@
 # =========================================================
 # Customise the below if you have them in different places
 #
+# The location where this installation of the scheduler 
+# instance is. The datafiles will be in this directory,
+# and the bin, jobs, logs and joblogs will all be under
+# this directory.
+installed_dir='/opt/dickinson/scheduler'
+
+# The maximimum number of minutes to wait for the tcpip port
+# to be released when we are trying to restart the server.
+max_tcpip_wait=10
+
+# The below two are now provided by the shell_vars config file
+# as I also need to use them in a services file.
+# Edit the shell_vars file if you wish to change these.
+
+source ${installed_dir}/etc/shell_vars
+
 # The tcpip socket we are going to use, the default is 9002.
 # If this is changed you will also need to supply a port
 # number each time you run the jobsched_cmd program as that
 # also defaults to 9002.
 
-prod_port_num='9002'
+prod_port_num=${SCHED_PORT}
 
 # The ip address the server is to listen on. This should
 # be changed to an internal interface address if you
 # have any external facing ip adresses in the network.
-local_host="127.0.0.1"
-
-# The location where this installation of the scheduler 
-# instance is. The datafiles will be in this directory,
-# and the bin, jobs, logs and joblogs will all be under
-# this directory.
-
-installed_dir='/opt/dickinson/scheduler'
+local_host=${SCHED_IPADDR}
 
 # The maximimum number of minutes to wait for the tcpip port
 # to be released when we are trying to restart the server.
@@ -50,7 +59,7 @@ max_tcpip_wait=10
 # This may also catch you out if you use longer path names than
 # those above. grep only seems to check about 60 bytes.
 sched_cmd_pgm="bin/jobsched_cmd ${prod_port_num} ${local_host}"
-if [ "${local_host}." != "127.0.0.1." ];
+if [ "${local_host}." != "127.0.0.1." -a "${local_host}." != "." ];
 then   # used identified interface
    prod_run_cmd="bin/jobsched_daemon ${prod_port_num} ${local_host}"
 else   # listen on all interfaces
@@ -144,7 +153,7 @@ startquiet() {
 	   while [ ${retry_count} -lt ${max_tcpip_wait} ];
 	   do
 		   sleep 60
-           ${prod_run_cmd}
+           nohup ${prod_run_cmd} &
            a=$?
            if [ "${a}." == "0." ];
            then
@@ -230,7 +239,7 @@ restart() {
 
    # start the server process again, it goes daemon when all is ok so we
    # can safely wait for the status code to return.
-   ${prod_run_cmd}
+   nohup ${prod_run_cmd} &
    a=$?
    if [ "${a}." == "0." ];
    then

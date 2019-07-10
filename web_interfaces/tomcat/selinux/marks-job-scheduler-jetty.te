@@ -1,0 +1,13 @@
+policy_module(marks-job-scheduler-jetty, 0.1.01)
+require {
+	type jetty_t;
+	type jetty_var_lib_t;
+	class file map;
+}
+
+#============= jetty_t ==============
+#!!!! This avc can be allowed using the boolean 'domain_can_mmap_files'
+allow jetty_t jetty_var_lib_t:file map;
+corenet_tcp_connect_unreserved_ports(jetty_t)
+fs_read_cgroup_files(jetty_t)
+fs_search_cgroup_dirs(jetty_t)

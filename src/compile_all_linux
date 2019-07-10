@@ -54,20 +54,6 @@ echo "#define GCC_MAJOR_VERSION${gcc_major_version}" >> system_type.h
 
 echo "#endif" >> system_type.h
 
-if [ "${gcc_version}." != "3.4.2." ];
-then
-   echo "**Warning** This has only been tested sucessfully compiled under GCC version 3.4.2"
-   echo "            or below, and GCC version 4.5.1 and above"
-   if [ "${gcc_version}." = "4.1.1." ];
-   then
-      echo "**CRITICAL** This is known to go into a hard loop when"
-      echo "             compiled under GCC version 4.1.1, something"
-      echo "             to do with the socket IO changes in GCC."
-   else
-      echo "**Warning** you may have issues with any other compiler version."
-   fi
-fi
-
 ## ------------------------------------------------------------------------
 ## Just make sure the MAXCC has the highest error code
 ## ------------------------------------------------------------------------
@@ -91,13 +77,13 @@ gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation -Wno-unuse
 testcc $?
 gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation -Wno-format-truncation jobslib.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation -Wno-format-truncation schedlib.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation -Wno-format-truncation -Wno-restrict schedlib.c
 testcc $?
 gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation utils.c
 testcc $?
 gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation api.c
 testcc $?
-gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation -Wno-format-truncation server.c
+gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-unused -Wstringop-truncation -Wno-format-truncation -Wno-restrict server.c
 testcc $?
 gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wstringop-truncation bulletproof.c
 testcc $?

@@ -1,0 +1,28 @@
+# /usr/lib/systemd/system/marks_job_scheduler.service
+[Unit]
+Description=Marks Job Scheduler
+Documentation=man:jobsched_daemon(1)
+After=network.target nss-lookup.target
+
+[Service]
+Type=simple
+EnvironmentFile=/opt/dickinson/scheduler/etc/shell_vars
+ExecStart=/bin/bash -c 'cd ${SCHED_BASE_DIR};${SCHED_BASE_DIR}/bin/jobsched_daemon ${SCHED_PORT} ${SCHED_IPADDR}'
+ExecStop=/bin/bash -c 'cat ${SCHED_BASE_DIR}/etc/stop_cmds | ${SCHED_BASE_DIR}/bin/jobsched_cmd ${SCHED_PORT} ${SCHED_IPADDR}'
+RuntimeDirectory=y
+RuntimeDirectoryMode=0755
+# 10min timeout permitted to allow running jobs to complete
+TimeoutStopSec=600
+User=root
+Group=root
+PrivateTmp=false
+# Default killmode is control-group which stops all child processes started
+# from this service, which would include all processes that the job scheduler
+# has restarted via scheduled jobs (ie snort restarts, mariadb restarts after backups etc)
+# which would be a bad thing
+# Use the same killmode as crond which only stops the main process task, in this
+# case the scheduler itself.
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

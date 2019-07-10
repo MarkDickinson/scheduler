@@ -1,0 +1,8 @@
+policy_module(marks-job-scheduler-httpd, 0.1.01)
+
+require {
+	type httpd_sys_script_t;
+}
+
+#============= httpd_sys_script_t ==============
+corenet_tcp_connect_unreserved_ports(httpd_sys_script_t)

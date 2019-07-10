@@ -1,6 +1,8 @@
 This has only been used by me under
  - Tomcat 5
+And more recently used under
  - Jetty jetty-9.4.11-2.v20180605.fc28.noarch.
+ - jetty-9.4.15-1.v20190215.fc30.noarch
 
 It was only written as a self teaching exercise to teach myself a little java,
 or in this case Java Servlet Pages (jsp) which was a simpler way of achieving
@@ -14,6 +16,11 @@ And by using 'real' scheduler userids the 'real' user roles can be used to
 manage jobs/calendars/users etc. across all servers which cannot be permitted
 by a cgi interface as thats tracked as the apache user with no accountabilty.
 
+This document is for manual installation of the files, which is prefered
+as you then know exactly what you are installing. If you don't care to
+know and are running Fedora you can install the entire bundle including
+selinux rules with a single RPM I have available at
+https://mdickinson.dyndns.org/linux/doc/Job_Scheduler_RPMS.php
 
 The steps to implement this are simply
   (1) customise one configuration file
@@ -75,4 +82,8 @@ The steps to implement this are simply
     users to all servers at once, manage active jobs across all servers 
     from one place (similar to the perl-cgi interface but using your
     userid instead of the 'apache' is needed by the perl-cgi interface).
-    
+   
+(4) If the web browser interface reports no connection to the job
+    scheduler you will need to load the selinux rules needed for
+    fc30 which are in the selinux directory; or setenforce 0 to test
+    if selinux is the issue.

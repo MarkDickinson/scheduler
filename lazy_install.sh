@@ -2,6 +2,12 @@
 #
 # lazy_install.sh
 #
+# OBSOLETE: This script is for sysv init.d script systems !
+#           it has not been updated for systemd as systemd
+#           is not available on all systems. For systemd
+#           manually install using the sample service file
+#           provided or use my fc30 (or above) rpm files.
+#
 # ====== ONLY USE FOR FRESH INSTALLS ======
 # I have removed dbs conversion functionality as it is assumed
 # anybody getting this from a git repository has only just
@@ -61,11 +67,17 @@ intro() {
    echo "*************************************************"
    echo "*  Installation script for marks job scheduler  *"
    echo "*************************************************"
+   echo "--Warning-- this installs as a sysv service, for a systemd service"
+   echo ".           use the rpm install and not this script"
+   echo ""
    echo "Before beginning you need to know..."
    echo "  The directory you are installing to"
    echo "  You should have picked a name for the init.d script"
    echo "  Decided on  TcpIp port number to use (default is 9002)"
    echo "  And chosen a admin user to own the files, preferably not root"
+   echo " "
+   echo "Fedora users should use the rpm package to install rather than"
+   echo "using this script."
    echo " "
    read -p "Depress ENTER to proceed" testvar
    clear
@@ -527,6 +539,10 @@ then
    get_parms
    install_appl
    install_rc_scripts
+   # Below two lines added as I'm chaning the startup script
+   # (and services file) to use them.
+   echo "SCHED_PORT=${portnum}" >> ${targetdir}/etc/shell_vars
+   echo "SCHED_IPADDR=" >> ${targetdir}/etc/shell_vars
    create_uninstaller
    show_start_command
    start_server

@@ -1,0 +1,23 @@
+I keep my current spec files for this package here to avoid misplacing them.
+If you want to us ethese you will have a lot of directory entries to change,
+as they are hard coded for my source directory structures.
+
+Output is to the standard rpmbuild tree.
+
+[mark@phoenix packaging]$ tree ./
+./
+├── BUILD
+├── build_all.sh
+├── RPMS
+│   ├── noarch
+│   └── x86_64
+├── SOURCES
+├── SPECS
+│   ├── marks-job-scheduler-buildfromsrc.spec
+│   ├── marks-job-scheduler-httpd.spec
+│   ├── marks-job-scheduler-jetty.spec
+│   └── marks-job-scheduler.spec
+└── SRPMS
+
+7 directories, 5 files
+

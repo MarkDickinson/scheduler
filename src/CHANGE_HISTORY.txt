@@ -16,13 +16,20 @@ Change Type Key: (S) Security change
                  (N) New program included
 
 
+Fixes Since V1.18
+-----------------
+None: Version V1.18 is this release.
+
 Fixes Since V1.17
 -----------------
-None: Version V1.17 is this release.
+2019/07/10 - (I) Removed the function to make the scheduler go daemon
+                 as that prevented systemd from being able to manage it.
+                 This means if started outside of systemd it must be 'nohup'ed
+                 and the sample rc file has been changed to relect that.
 
 Fixes Since V1.16
 -----------------
-2019/07/24 - (*) Changes in jobsched_cmd to fix an error in
+2019/06/24 - (*) Changes in jobsched_cmd to fix an error in
                  in converting the repeatevery value, reguardless
                  of the user input value jobsched_cmd always put a
                  value 010 in the data buffer. It now populates that

@@ -1995,7 +1995,7 @@ void SCHED_display_server_status( API_Header_Def * pApi_buffer, internal_flags *
      return;
   }
 
-  strcpy(local_buffer, "Job Scheduler Server, by Mark Dickinson 2001-2011 (GPLV2 Release)\n" );
+  strcpy(local_buffer, "Job Scheduler Server[v1.18] by Mark Dickinson 2001-2019 (GPLV2 Release)\n" );
   junk = API_add_to_api_databuf( pApi_buffer, local_buffer, strlen(local_buffer), tx );
 
   datalen = snprintf( local_buffer, (MAX_API_DATA_LEN - 1), "Server Version : %s\n", GLOBAL_flags->version );
@@ -2155,7 +2155,7 @@ void SCHED_display_server_status_alertsonly( API_Header_Def * pApi_buffer, inter
      return;
   }
 
-  strcpy(local_buffer, "Job Scheduler Server, by Mark Dickinson 2001-2011 (GPLV2 Release)\n" );
+  strcpy(local_buffer, "Job Scheduler Server[v1.18] by Mark Dickinson 2001-2019 (GPLV2 Release)\n" );
   junk = API_add_to_api_databuf( pApi_buffer, local_buffer, strlen(local_buffer), tx );
 
   /* MID: Caution, ive found a \n\n combination does something funny to the

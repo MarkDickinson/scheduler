@@ -1,53 +1,101 @@
-I consider this an error with the systemd environment rather than with the
-job scheduler itself. As such I will npt be spending any further time looking
-into it.
-The issue is systemd cannot start the job scheduler using the startup script,
-running the startup script manually works.
+There is currently three known issues, which are NOT bugs, but things that may be
+of concern to you, so ducumented here as just something to be aware of.
 
-The impact of this issue is simply that after rebooting a server you must manually
-run the startup script from /etc/rc.d/init.d to start the job scheduler.
+Issue1 - Don't change the servers timezone (not a bug)
+Issue2 - All job numbers are 000000 (not a bug)
+Issue3 - Design decision for systemd (not a bug)
 
-More details...
+-------------------------------------------------------------------------------------------
+                     Issue1 - Don't change the servers timezone
+                                **  NOT A BUG **
+-------------------------------------------------------------------------------------------
+If the server timezone is changed the scheduled time for a job to be run does not detect the
+timezone change until after the job next runs, at the time it then recalculates it's next
+runtime. For example if you change a timezone offset by 12 hours every job will run for the
+next execution only 12 hours out from when you would expect it to.
+Future executions will be at the correct time.
 
-On systemd servers (ie:fedora) the SYSV init.d scripts are mapped to systemctl
-services at system initialisation time in an attempt at compatability to allow
-them to start as normal.
-The systemd environment as currently implemented cannot start the job scheduler,
-as seen below it says it started it but no job scheduler is running at the end
-of the systemd startup; and no messages are logged to the scheduler log file
-indicating it made any attempt to start.
+This was found myself when I changed a server timezone from EST to NZ time. There have been
+no user reported occurrences of this (probably changing the timezone is not a common practise).
 
-[root@phoenix init.d]# systemctl status marks_job_scheduler
-● marks_job_scheduler.service - SYSV: Marks job scheduler
-   Loaded: loaded (/etc/rc.d/init.d/marks_job_scheduler; generated)
-   Active: active (exited) since Sun 2019-02-10 11:40:01 NZDT; 4min 22s ago
-     Docs: man:systemd-sysv-generator(8)
+While the server time had changed to NZ time jobs were still scheduled to run at EST time.
+Stopping and starting the scheduler does not resolve the problem, nor does rebooting the server;
+the jobs remained scheduled at EST time. This is because the active scheduler queue uses binary
+timestamps taken at the initial scheduling time, so changing offsets by 12-13hrs will throw out
+the job scheduling time by the same amount until the jobs next get rescheuled.
 
-Feb 10 11:40:01 phoenix systemd[1]: Starting SYSV: Marks job scheduler...
-Feb 10 11:40:01 phoenix systemd[1]: Started SYSV: Marks job scheduler.
+The aberation lasts only until a job is run. After each job is run it is rescheduled based on
+the new timezone. 
 
-[root@phoenix init.d]# ps -ef | grep sched
-root        10     2  0 Feb01 ?        00:01:21 [rcu_sched]
-root      6938  5044  0 11:44 pts/1    00:00:00 grep --color=auto sched
+I have no intention of trying to resolve this issue, most servers don't get their timezones
+changed after they are installed. If they do it is a manual action on your system admins
+part. There is nothing that can be coded in the job scheduler to resolve this, it does not
+do anything silly like check to see if a timezone offset has been changed every 5 minutes or
+so, that would be a waste of cycles for something that is unlikely to ever happen in the real world.
 
+-------------------------------------------------------------------------------------------
+                     Issue2 - All job numbers are 000000
+                                **  NOT A BUG **
+-------------------------------------------------------------------------------------------
+This is just something I have needed needed to implement, and have in fact forgotten why
+I created the field in the first place as jobs are keyed by jobname.
 
+Just something to be aware of when you display job details, the field is expected to be 
+all zeros.
 
-However running exactly the same init.d script manually works perfectly,
-the scheduler starts and happily uses its log file.
+-------------------------------------------------------------------------------------------
+                       Issue3 - Design decision for systemd
+                               **  NOT A BUG **
+-------------------------------------------------------------------------------------------
+The origional scheduler product, over a decade ago, had the server component go 'daemon' 
+using the C system call daemon in order to background it and run as a true server task.
+Unfortunately in the systemd world when a program goes daemon systemd loses track of it
+and cleans it up, preventing the server from ever starting.
 
-[root@phoenix init.d]# ./marks_job_scheduler start
+To resolve this the server component has had a source code change and no longer goes daemon,
+allowing systemd to manage the startup, it does cause an issue for old SYSV systems and the
+init.d rc startup script has been modified to use a messier nohup method as the server
+can no longer cleanly go daemon, but that is a side issue.
 
-[root@phoenix init.d]# echo $?
-0
-[root@phoenix init.d]# ps -ef | grep sched
-root        10     2  0 Feb01 ?        00:01:21 [rcu_sched]
-root      7068     1  0 11:45 ?        00:00:00 bin/jobsched_daemon 9002
-root      7094  5044  0 11:45 pts/1    00:00:00 grep --color=auto sched
-[root@phoenix init.d]# 
+The 'Design decision is that the service file uses a KillMode=process to limit it to
+cleaning up only the bash process it uses to start the scheduler rather than the
+default setting that would kill all child processes started by the service.
 
+The reason for that is because systemd keeps track of everything started by the service
+scheduled jobs that stop/start applications periodically (for backups, to sort out
+memory hogs etc) are tracked as children of the scheduler by systemd... and in the
+default KillMode would all be killed if a systemctl stop against the scheduler service
+was issued.
 
+For example I have a regular job to restart 'snort', and after a restart it becomes a
+child of the job scheduler service instead of being free to live its own life. As a result
+if a systemctl stop was issued against the job scheduler service using the default KillMode
+th snort application would also be killed as part of the service stopping.
+[root@phoenix system]# systemctl status marks_job_scheduler
+● marks_job_scheduler.service - Marks Job Scheduler
+   Loaded: loaded (/usr/lib/systemd/system/marks_job_scheduler.service; enabled; vendor preset: disabled)
+   Active: active (running) since Wed 2019-07-10 11:25:19 NZST; 25min ago
+     Docs: man:jobsched_daemon(1)
+ Main PID: 13362 (bash)
+    Tasks: 4 (limit: 3863)
+   Memory: 62.6M
+   CGroup: /system.slice/marks_job_scheduler.service
+           ├─13362 /bin/bash -c cd /opt/dickinson/scheduler;/opt/dickinson/scheduler/bin/jobsched_daemon 9002 
+           ├─13363 /opt/dickinson/scheduler/bin/jobsched_daemon 9002
+           └─31485 /usr/local/bin/snort -D -A fast -b -d -i enp3s0 -u snort -g snort -c /etc/snort/snort.conf -l /var/log/snort -b
 
-In summary there are no issues with the job scheduler, there is an issue in
-that systemd cannot start the job scheduler, but the resolution is simply to
-run the /etc/rc.d/init.d script manually as that bypasses whatever issues
-systemd has with starting the scheduler when it uses the same script.
+As the default KillMode would result in anything stopped/started by script by scheduler jobs
+being killed when the service is stopped (suddenly disapearing applications and databases
+are not ideal) the default KillMode simply cannot be used by this service.
+
+Potentially an issue as unwanted child processes may be left hanging about by
+this decision, but preferable to having applications that may be started by the
+job scheduler service suddenly killed.
+More potentially an issue as if the scheduler ../etc/stop_cmds file is ever manually
+edited by a user that intoduces invalid syntax the jobsched_daemon process will not
+be stopped by the service, so don't play with that file.
+
+Note: this is a perfectly valid design solution, it is in fact the same solution used
+      by the crond.service file, which also does not want child processes it may start
+      killed off by a systemctl stop crond.
+

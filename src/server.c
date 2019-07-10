@@ -3413,17 +3413,19 @@ int main (int argc, char **argv, char **envp) {
       myprintf(  "INFO:SI074-TCP-IP Services now available\n" );
    }
 
-#ifdef SOLARIS
+// 2019/07/10 Remove the daemon ability as systemd cannot track the process
+//            if it goes daemon, causing the startup to fail.
+//#ifdef SOLARIS
    myprintf(  "INFO:SI075-Server has initialised\n" );
-#else
-   myprintf(  "INFO:SI076-Server has initialised, going daemon now\n" );
-   /* Switch ourselves to run as a deamon now */
-   z = daemon( 1, 1 ); /* don't change directory to /, dont redirect stderr and stdout to /dev/null */
-   if (z == -1) {
-		   perror( "Request to run as a daemon" );
-		   myprintf(  "*ERR:SE068-Unable to run as a deamon task, running as a normal task !\n" );
-   }
-#endif
+//#else
+//   myprintf(  "INFO:SI076-Server has initialised, going daemon now\n" );
+//   /* Switch ourselves to run as a deamon now */
+//   z = daemon( 1, 1 ); /* don't change directory to /, dont redirect stderr and stdout to /dev/null */
+//   if (z == -1) {
+//		   perror( "Request to run as a daemon" );
+//		   myprintf(  "*ERR:SE068-Unable to run as a deamon task, running as a normal task !\n" );
+//   }
+//#endif
 
    /* If execjobs was off at the last shutdown, retain that state but
       also raise an alert so that state is known.
