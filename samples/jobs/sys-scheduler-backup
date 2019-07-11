@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# sys-scheduler-backup
+#
+# Daily backup of all scheduler configuration files
+#
+
+# The datestamp to use on the backup files
+datenow=`date +"%Y%m%d"`
+
+# Where we expect the root directory tree to be
+SCHED_DIR="/opt/dickinson/scheduler"
+backupdir="${SCHED_DIR}/backups/databases"
+backupfile="${backupdir}/dump_${datenow}.txt"
+
+# We need databases to backup, make sure the directores exist
+if [ ! -d ${SCHED_DIR} ];
+then
+   echo "$0 script misconfigured, incorrect scheduler directory"
+   exit 1
+fi
+if [ ! -d ${backupdir} ];
+then
+   mkdir -p ${backupdir}
+   echo "Warning: Created directory ${backupdir}"
+fi
+
+# Backup the sheduler data in a form it can be used to reload the scheduler
+# Save the resultcode to use as the script exit code
+${SCHED_DIR}/bin/jobsched_take_snapshot ${SCHED_DIR} > ${backupfile}
+resultcode=$?
+
+# Delete old backups over three weeks old
+find ${SCHED_DIR}/backups/databases -type f -name "dump*txt" -mtime +22 | while read fname
+do
+   echo "Removing old backup ${fname}"
+   /bin/rm ${fname}
+done
+
+# exit with the result code from the snapshot
+exit ${resultcode}

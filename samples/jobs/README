@@ -1,0 +1,16 @@
+These two jobs are provided as sample jobs, they are provided as they are
+useful and should be run on your scheduler to prevent excessive log files.
+
+null-scheduler-archive-logs   run weekly, backs up the scheduler log files and deletes older ones
+sys-scheduler-backup          run daily, backs up scheduler config so scheduler config/jobs/calendars/uers can be rebuilt
+
+Jobs can be added with the following command
+
+cat << EOF | /opt/dickinson/scheduler/bin/jobsched_cmd
+autologin
+JOB ADD NULL-SCHEDULER-ARCHIVE-LOGS,OWNER root,TIME 20190713 05:10,CMD /opt/dickinson/scheduler/jobs/null-scheduler-archive-logs,DESC Archive scheduler logfiles,DAYS "SAT",CATCHUP NO
+JOB ADD SYS-SCHEDULER-BACKUP,OWNER root,TIME 20190711 05:50,CMD /opt/dickinson/scheduler/jobs/sys-scheduler-backup,DESC Backup scheduler databases,CATCHUP NO
+exit
+EOF
+
+Caution: if you installed the package using thr rpm distribution these jobs have already been added.

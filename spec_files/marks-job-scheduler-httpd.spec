@@ -10,7 +10,7 @@
 # to work correctly.
 #
 
-%define _topdir        /home/mark/ownCloud/git/falcon/scheduler/packaging 
+%define _topdir         /home/mark/ownCloud/git/packaging
 %define name            marks-job-scheduler-http
 %define release        1%{?dist}
 %define version     1.18
@@ -18,14 +18,14 @@
 
 BuildRoot:    %{buildroot}
 Summary:         Marks Job Scheduler HTTP web interface
-License:         GPL V2
+License:         GPLv2
 Name:             %{name}
 Version:         %{version}
 Release:         %{release}
 Prefix:         /opt/dickinson
 Group:          Dickinson
 Packager:       Mark Dickinson
-URL:            https://mdickinson.dyndns.org
+URL:            https://mdickinson.dyndns.org/linux/doc/Job_Scheduler_about.php
 Requires:       marks-job-scheduler
 Requires:       httpd
 Requires:       mod_perl

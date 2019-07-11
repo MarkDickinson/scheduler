@@ -9,7 +9,7 @@
 # to actually work on a system in enforcing mode.
 #
 
-%define _topdir         /home/mark/ownCloud/git/falcon/scheduler/packaging
+%define _topdir         /home/mark/ownCloud/git/packaging
 %define name            marks-job-scheduler-jetty
 %define release        1%{?dist}
 %define version     1.18
@@ -17,7 +17,7 @@
 
 BuildRoot:    %{buildroot}
 Summary:         Marks Job Scheduler J2EE Jetty interface
-License:         GPL V2
+License:         GPLv2
 Name:             %{name}
 Version:         %{version}
 Release:         %{release}
@@ -25,7 +25,7 @@ Source:         %{name}?%{version}.tar.gz
 Prefix:         /opt/dickinson
 Group:          Dickinson
 Packager:       Mark Dickinson
-URL:            https://mdickinson.dyndns.org
+URL:            https://mdickinson.dyndns.org/linux/doc/Job_Scheduler_about.php
 Requires:       marks-job-scheduler
 Requires:       httpd
 Requires:       jetty

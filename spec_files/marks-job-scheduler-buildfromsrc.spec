@@ -15,22 +15,22 @@
 # As it needs to compile the source this RPM has a dependecy on gcc
 #
 
-%define _topdir         /home/mark/ownCloud/git/falcon/scheduler/packaging
+%define _topdir         /home/mark/ownCloud/git/packaging
 %define name            marks-job-scheduler-buildfromsrc
 %define release        1%{?dist}
 %define version     1.18
 %define buildroot %{_topdir}/%{name}?%{version}?root
 
 BuildRoot:    %{buildroot}
-Summary:         Marks Job Scheduler
-License:         GPL V2
+Summary:         Marks Job Scheduler compiled at install time
+License:         GPLv2
 Name:             %{name}
 Version:         %{version}
 Release:         %{release}
 Prefix:         /opt/dickinson
 Group:          Dickinson
 Packager:       Mark Dickinson
-URL:            https://mdickinson.dyndns.org
+URL:            https://mdickinson.dyndns.org/linux/doc/Job_Scheduler_about.php
 Requires:       gcc
 Provides:       marks-job-scheduler
 
@@ -51,6 +51,8 @@ mkdir -p $RPM_BUILD_ROOT/opt/dickinson/scheduler/alert_tools
 mkdir -p $RPM_BUILD_ROOT/opt/dickinson/scheduler/src
 mkdir -p $RPM_BUILD_ROOT/opt/dickinson/scheduler/bin
 mkdir -p $RPM_BUILD_ROOT/opt/dickinson/scheduler/manuals
+mkdir -p $RPM_BUILD_ROOT/opt/dickinson/scheduler/backups/databases
+mkdir -p $RPM_BUILD_ROOT/opt/dickinson/scheduler/backups/logfiles
 cp /home/mark/ownCloud/git/falcon/scheduler/samples/alert_samples/alerts_custom.txt $RPM_BUILD_ROOT/opt/dickinson/scheduler
 cat << EOF > $RPM_BUILD_ROOT/opt/dickinson/scheduler/etc/shell_vars
 # Used by scripts and systemd services
@@ -71,10 +73,6 @@ EOF
 cat << EOF > $RPM_BUILD_ROOT/opt/dickinson/scheduler/joblogs/README
 This directory must exist. All jobs that run write their output here.
 EOF
-cat << EOF > $RPM_BUILD_ROOT/opt/dickinson/scheduler/jobs/README
-This directory should exist. This is the prefered location for scripts
-that are to be run by the job scheduler.
-EOF
 cat << EOF > $RPM_BUILD_ROOT/opt/dickinson/scheduler/bin/README
 This directory must exist for the install to work.
 EOF
@@ -83,6 +81,7 @@ cp /home/mark/ownCloud/git/falcon/scheduler/samples/initd/marks_job_scheduler.se
 cp /home/mark/ownCloud/git/falcon/scheduler/doc/man/man1/* $RPM_BUILD_ROOT/usr/local/share/man/man1
 cp /home/mark/ownCloud/git/falcon/scheduler/src/* $RPM_BUILD_ROOT/opt/dickinson/scheduler/src
 cp /home/mark/ownCloud/git/falcon/scheduler/doc/PDF/* $RPM_BUILD_ROOT/opt/dickinson/scheduler/manuals
+cp /home/mark/ownCloud/git/falcon/scheduler/samples/jobs/* $RPM_BUILD_ROOT/opt/dickinson/scheduler/jobs
 exit
 
 %files
@@ -92,6 +91,7 @@ exit
 %attr(0755, root, root) /opt/dickinson/scheduler/joblogs/*
 %attr(0755, root, root) /opt/dickinson/scheduler/jobs/*
 %attr(0755, root, root) /opt/dickinson/scheduler/bin/*
+%attr(0755, root, root) /opt/dickinson/scheduler/backups/*
 %attr(0644, root, root) /opt/dickinson/scheduler/alerts_custom.txt
 %attr(0755, root, root) /opt/dickinson/scheduler/alert_tools/*
 %attr(0644, root, root) /opt/dickinson/scheduler/manuals/*
@@ -109,6 +109,14 @@ cd /opt/dickinson/scheduler/src
 systemctl daemon-reload
 systemctl enable marks_job_scheduler
 systemctl start marks_job_scheduler
+# Add the two sample jobs to do logfile and database backups
+sleep 1       # let the scheduler start
+cat << EOF | /opt/dickinson/scheduler/bin/jobsched_cmd > /dev/null 2>&1
+autologin
+JOB ADD NULL-SCHEDULER-ARCHIVE-LOGS,OWNER root,TIME 20190713 05:10,CMD /opt/dickinson/scheduler/jobs/null-scheduler-archive-logs,DESC Archive scheduler logfiles,DAYS "SAT",CATCHUP NO
+JOB ADD SYS-SCHEDULER-BACKUP,OWNER root,TIME 20190711 05:50,CMD /opt/dickinson/scheduler/jobs/sys-scheduler-backup,DESC Backup scheduler databases,CATCHUP NO
+exit
+EOF
 
 %postun
 # Job scheduler may have been running at the time the rpm was
@@ -118,18 +126,10 @@ if [ "${isupoid}." != "." ];
 then
    kill -9 ${isupoid}
 fi
-# Clean up all the logs and joblogs that will have been created
-# by the job scheduler running.
-/bin/rm -rf /opt/dickinson/scheduler
-# If the job scheduler was the only one of my packages installed
-# then clean up the top level directory as well.
-datacount=`ls /opt/dickinson | wc -l`
-if [ ${datacount} == 0 ];
-then
-   rmdir /opt/dickinson
-fi
 # we have deleted the services file
 systemctl daemon-reload
+# It may still be stuck in a failed state
+systemctl reset-failed
 
 %clean
 /bin/rm -rf $RPM_BUILD_ROOT/etc

@@ -1,5 +1,5 @@
 I keep my current spec files for this package here to avoid misplacing them.
-If you want to us ethese you will have a lot of directory entries to change,
+If you want to use these you will have a lot of directory entries to change,
 as they are hard coded for my source directory structures.
 
 Output is to the standard rpmbuild tree.
@@ -21,3 +21,5 @@ Output is to the standard rpmbuild tree.
 
 7 directories, 5 files
 
+The RPM files built are not perfect, specifically trying to 'dnf reinstall' 
+from a repo leaves nothing installed for some reason.

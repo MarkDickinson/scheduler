@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# null-scheduler-archive-logs
+#
+# NOTE: NULL* is a reserved job type
+#       Jobs beginning with null- will run exlusively with no other jobs
+#       running and all output goes to /dev/null. This allows us to perform
+#       maintenance on the joblogs directory as we know no jobs are writing
+#       to logs in that directory.
+#
+# Weekly archive of the schedule joblogs file, and cleanup scheduler log files
+#
+# If this is not run on a regular basis you will end up with a large amount
+# of log files
+#    server logs are created one per day
+#    joblogs are appended to until deleted
+#
+
+# Backup directory must exist
+if [ ! -d /opt/dickinson/scheduler/backups/logfiles ];
+then
+   mkdir -p /opt/dickinson/scheduler/backups/logfiles
+   chown mark /opt/dickinson/scheduler/backups/logfiles
+fi
+
+# Datestamp to use for backup file timestamps
+DATESTAMP=`date +"%Y%m%d"`
+
+# Archive the joblogs, then delete the joblogs
+cd /opt/dickinson/scheduler/joblogs
+tar -zcvf /opt/dickinson/scheduler/backups/logfiles/joblogs_${DATESTAMP} *
+/bin/rm /opt/dickinson/scheduler/joblogs/*
+
+# Backup the server log files, and delete older logfiles
+cd /opt/dickinson/scheduler/logs
+tar -zcvf /opt/dickinson/scheduler/backups/logfiles/logfiles_${DATESTAMP} *
+find /opt/dickinson/scheduler/logs -type f -mtime +15 -name "server*log" | while read fname
+do
+   /bin/rm ${fname}
+done
+
+# Prune older files from the backup folders also
+find /opt/dickinson/scheduler/backups/logfiles -type f -mtime +22 -name "joblogs*" | while read fname
+do
+   /bin/rm ${fname}
+done
+find /opt/dickinson/scheduler/backups/logfiles -type f -mtime +22 -name "logfiles*" | while read fname
+do
+   /bin/rm ${fname}
+done
+exit 0
