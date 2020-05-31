@@ -9,6 +9,9 @@ NOTE: VERY GCC VERSION DEPENDANT, compiled and worked no probs on GCC3 up
       compiles cleanly and works again from FC14 onward with GCC4. Wierd.
       Currently tested OK on Fedora28, compiler: gcc (GCC) 8.1.1 20180712 (Red Hat 8.1.1-5)
       Currently tested OK on Fedora30, compiler: gcc (GCC) 9.1.1 20190503 (Red Hat 9.1.1-1)
+      Currently tested OK on Fedora31, compiler: gcc (GCC) 9.2.1 20190827 (Red Hat 9.2.1-1)
+NOTE: Binaries compiled on F30 and F31 work perfectly on CentOS7 and CentOS8 (I just scp'ed
+      then across) so fairly portable [everything is staticly linked].
 
 This document includes the following sections in the order below
 
@@ -88,9 +91,27 @@ mkdir /opt/dickinson/scheduler/bin
 mkdir /opt/dickinson/scheduler/etc
 mkdir /opt/dickinson/scheduler/logs
 mkdir /opt/dickinson/scheduler/joblogs
+cp samples/alert_samples/alerts_custom.txt /opt/dickinson/scheduler
 
-# initialise some control files
-cat << EOF > /opt/dickinson/scheduler/etc/shell_vars
+# compile the programs; AND delete the temorary object files
+# created so git doesn't want to add them
+
+# There are two options here.
+
+   ------ option 1 (recomended/tested)
+     # make required directories
+     mkdir -p /opt/dickinson/scheduler
+     mkdir /opt/dickinson/scheduler/bin
+     mkdir /opt/dickinson/scheduler/etc
+     mkdir /opt/dickinson/scheduler/logs
+     mkdir /opt/dickinson/scheduler/joblogs
+     cp samples/alert_samples/alerts_custom.txt /opt/dickinson/scheduler
+     cd src
+     ./compile_all_linux /opt/dickinson/scheduler
+     find ./ -type f -name "*.o" -exec /bin/rm {} \;
+     cd ..
+     # initialise some control files
+     cat << EOF > /opt/dickinson/scheduler/etc/shell_vars
 SCHED_BASE_DIR=/opt/dickinson/scheduler
 SCHED_BIN_DIR=/opt/dickinson/scheduler/bin
 SCHED_JOBLOG_DIR=/opt/dickinson/scheduler/joblogs
@@ -98,15 +119,24 @@ SCHED_PORT=9002
 # Leave below empty to bind on all interfaces
 SCHED_IPADDR=
 EOF
-cp samples/alert_samples/alerts_custom.txt /opt/dickinson/scheduler
+     cat << EOF > /opt/dickinson/scheduler/etc/stop_cmds
+autologin
+sched shutdown
+EOF
 
-# compile the programs; AND delete the temorary object files
-# created so git doesn't want to add them
-cd src
-./compile_all_linux /opt/dickinson/scheduler
-find ./ -type f -name "*.o" -exec /bin/rm {} \;
-cd ..
+   ------ option 2 (only quickly tested, but I don't use it)
+     # the Makfile will create the directory /opt/dickinson/scheduler
+     # and subdirectories needed, plus create the two files needed
+     # in /opt/dicknson/scheduler/etc; oh yes, and compile and install
+     # the programs
+     # IT DOES NOT copy across the alerts_custom.txt file.
+     cd src
+     make
+     make install
+     make clean
 
+--- and carry on with the customisation
+# TARGET FILES DO NOT NEED TO BELONG TO ROOT (although it does run as root)
 # Change ownership of the scheduler to a non-root user
 # Change the below 'mark' to a non-root user on your system
 chown -R mark:mark /opt/dickinson/scheduler
@@ -121,6 +151,7 @@ cp samples/initd/server.rc3_d /etc/init.d/marks_job_scheduler
 chmod 755 /etc/init.d/marks_job_scheduler
 chkconfig --add marks_job_scheduler
 chkconfig marks_job_scheduler on
+service marks_job_scheduler start
 
 # -- on systemd systems 
 vi samples/initd/marks_job_scheduler.service and change the below
@@ -131,6 +162,7 @@ chmod 755 /usr/lib/systemd/system/marks_job_scheduler.service
 chcon system_u:object_r:systemd_unit_file_t:s0 /usr/lib/systemd/system/marks_job_scheduler.service
 systemctl enable marks_job_scheduler
 systemctl start marks_job_scheduler
+
 
                     Using the rpm packages
              -----------------------------------------
@@ -212,7 +244,12 @@ perl-cgi: operator access commands only, all commands issued under the apache id
           multiple remote job scheduler connect/disconnects per user, high overhead.
 J2EE    : access based on authority granted to the user logging on, full function,
           (N defined in config) N permanent connections to remote job schedulers
-          created and kept open, shared between all users of this interface.
+          created and kept open, shared between all users of this interface. If
+          only a few users this has a low overhead as there are not multiple connection
+          attempts to the scheduler; however if many users and a low permanent connection
+          number then a high overhead as repeated user logins will be needed as users
+          start to share the same connection and user auth switching start to be
+          needed for each request.
 
 There are install instructions for each in the relevant directories, RPMs are
 also available to perform the complete install if prefered available from the
