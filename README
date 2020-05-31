@@ -83,7 +83,7 @@ It may not meet your needs. But these are the basic functions provided
      forwarded to shell scripts so external monitoring tools are 
      able to catch failures (and hopefully be smart enough to handle
      the alert cancels as well)
-   - all failed jobs are places on an alert queue, and can be restarted
+   - all failed jobs are placed on an alert queue, and can be restarted
      (which requires all your jobs are able to restart from the beginning)
    - cutsomised alert messages can be configured based on the job exit 
      code
