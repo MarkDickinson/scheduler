@@ -172,7 +172,7 @@ sub JOB_status_display() {
 
     $testfail = substr( $dataline, 12, 18 );
     if ($testfail eq 'Connection refused') {
-       print '<span style="background-color: #FF0000"> **** JOB SCHEDULER IS NOT AVAILABLE **** Check with support staff</span><br><br><br>';
+       print '<span style="background-color: #FF0000"> '.$schedhostname.' **** JOB SCHEDULER IS NOT AVAILABLE **** Check with support staff</span><br>';
     }
     elsif ($jobcount == 0) {
        print "<span style=\"background-color: #FF0000\">${dataline}</span><br>\n";

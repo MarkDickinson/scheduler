@@ -109,7 +109,7 @@ jobsched_take_snapshot.o: jobsched_take_snapshot.c server_global_data.h jobslib.
 	gcc -ggdb3 -c -D_GNU_SOURCE -Wall -Wreturn-type -Wno-format-truncation jobsched_take_snapshot.c
 
 # ------------------------------------------------------
-# Clean up temporary files
+# Clean up temporary files and the compiled files
 # ------------------------------------------------------
 clean:
 	/bin/rm *.o

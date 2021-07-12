@@ -14,40 +14,19 @@ This interface is really old. My testing notes say it works under IE5 and
 Netscape 6; but automatic refresh doesn't work under Mozilla.
 So I stopped using this before Firefox existed, wow it's old.
 But it may be usefull to you so give it a try.
+UPDATE: automatic refresh works correctly under the "brave" browser
+        as of July 2021 so not autorefreshing is a Firefox thing.
 
 The steps are
   (1) customise the configuration file
   (2) copy the files into place on one of you webservers
-  (3) update the webserver httpd.conf
+  (3) copy into place the httpd configuration file
   (4) add the webserver user as a valid job scheduler user
   (5) point a web browser to it and enjoy
 and the steps are covered in a bit more detail below
 
-(1) edit scheduler-lib.pl in two places, the first is required BUT
-    you only need to edit in the second place if you intend to use
-    this to monitor multiple servers all running the job scheduler
-    - at the start of the file change 'falcon' to your webserver name,
-      change 9002 (default so only change if you changed it) to the
-      tcpip port you configured for the scheduler, change the path
-      /opt/job_scheduler to where you installed the application,
-      lastly check /scheduler-icons/ is the alias you will use when
-      you customise your httpd.conf
-           # --------------- customise for your site -------------
-           sub scheduler_HTTPD_Home {
-             return "http://falcon/cgi-bin/scheduler";
-           }
-           sub scheduler_port {
-             return "9002";
-           }
-           sub scheduler_cmdprog {
-              my $useport=&scheduler_port();
-              return "/opt/job_scheduler/bin/jobsched_cmd ${useport}";
-           }
-           sub scheduler_icon_path {
-             return "/scheduler-icons/";
-           }
-           # ---------- end of customisation changes -----------
-     
+(1) edit scheduler-lib.pl ONLY if you are going to monitor more than
+    one job scheduler.
     - at the end of the file IF YOU WANT TO MONITOR MULTIPLE SCHEDULERS
       change subroutine scheduler_system_list (the last subroutine in
       the file)
@@ -81,21 +60,22 @@ and the steps are covered in a bit more detail below
     and if you have selinux enabled also (for FC15 anyway)
       chcon -R system_u:object_r:httpd_sys_script_exec_t:s0 /var/www/cgi-bin/scheduler
 
-(3) update your webserver httpd.conf, normaly in /etc/httpd/conf
-    There will be a section in there defining aliases, add
-       Alias /scheduler-icons/ /var/www/cgi-bin/scheduler/icons/
+(3) Copy the file 'marks_job_scheduler.conf' from the directory you installed
+    the files into to the directory /etc/httpd/conf.d (for rhel based systems).
+    IF YOU INSTALLED THE FILES OTHER THAN /var/www/cgi-bin/scheduler EDIT THIS FILE.
     Restart your web server to pick up the change
 
 (4) add the webserver user as a valid scheduler user
     If you have multiple servers running the job scheduler do this
     for every one you configured in step 1 to be monitored.
-    As an admin user on each server to be monitored from the 
+    As a LOGGED ON admin user on each server to be monitored from the 
     jobsched_cmd interface use the command
       user add apache,password apache,autoauth yes,auth operator,desc "Web Operator id"
 
 (5) Point a web browser to it and enjoy
     http://servername/cgi-bin/html_job_status.pl
 
-(6) If the enjoyment fails at step 5, selinux rules you will probably need are
-    provided in the selinux directory.
+(6) If the enjoyment fails at step 5, selinux rules will need to be customised.
+    I no longer provide examples as the rules needed changed between F30/F31/F32...
+    so you will need to customise for your system.
 

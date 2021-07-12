@@ -22,6 +22,9 @@
 #include "userrecdef.h"
 #include "memorylib.h"
 
+/* now extern in config.h, define here */
+internal_flags pSCHEDULER_CONFIG_FLAGS;
+
 #define MAX_CHAR_LEN 254
 #define MAX_DIR_LEN (MAX_CHAR_LEN - 15)
 

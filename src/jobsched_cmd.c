@@ -18,6 +18,9 @@
 #include "calendar_utils.h" 
 #include "memorylib.h"
 
+/* now extern in config.h, define here */
+internal_flags pSCHEDULER_CONFIG_FLAGS;
+
 /* #define DEBUG_MODE_ON 1 */
 
 #define MAX_WORKBUF_LEN_JS 4096
@@ -2659,15 +2662,11 @@ int autologon_command( API_Header_Def * pApi_buffer ) {
    pid_t my_pid;
    char pid_string[21];
    char user_name[40];
-#ifdef GCC_MAJOR_VERSION3
-   struct passwd * user_details;
-#else
    struct passwd user_details;
    struct passwd *result;
    char *buf;
    size_t bufsize;
    int s;
-#endif
 
 #ifdef DEBUG_MODE_ON
    printf("DEBUG: entered autologon_command \n");
@@ -2692,18 +2691,6 @@ int autologon_command( API_Header_Def * pApi_buffer ) {
 #ifdef DEBUG_MODE_ON
       printf("DEBUG: about to call getpwuid with %d \n", real_user );
 #endif
-/* MIDMID This is the problem. 
- * The parm format has completely changed between comoiler versions
- * Not it is apparantly
- *        int getpwuid_r(uid_t uid, struct passwd *pwd,
- *                           char *buf, size_t buflen, struct passwd **result);
- * investigating */
-#ifdef GCC_MAJOR_VERSION3
-      user_details = getpwuid(real_user);
-      strncpy( user_name, user_details->pw_name, 39 );
-#else
-/* getpwuid crashed constantly under later GCC versions,
- * do it the hard way */
       bufsize = sysconf(_SC_GETPW_R_SIZE_MAX);
       if (bufsize == -1)          /* Value was indeterminate */
           bufsize = 16384;        /* Should be more than enough */
@@ -2715,7 +2702,7 @@ int autologon_command( API_Header_Def * pApi_buffer ) {
       s = getpwuid_r((int)real_user, &user_details, buf, bufsize, &result);
       if (result == NULL) {
          if (s == 0)
-             printf("Your userid is no longer in the unox system password file\n");
+             printf("Your userid is no longer in the unix system password file\n");
          else {
              errno = s;
              perror("getpwnam_r");
@@ -2725,7 +2712,6 @@ int autologon_command( API_Header_Def * pApi_buffer ) {
       }
       strncpy( user_name, user_details.pw_name, 39 );
       free(buf);
-#endif
 #ifdef DEBUG_MODE_ON
    printf("DEBUG: username retrieved from passwd file via getpwuid is %s \n", user_name );
 #endif

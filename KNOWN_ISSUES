@@ -4,6 +4,7 @@ of concern to you, so ducumented here as just something to be aware of.
 Issue1 - Don't change the servers timezone (not a bug)
 Issue2 - All job numbers are 000000 (not a bug)
 Issue3 - Design decision for systemd (not a bug)
+Issue4 - JS port 9002 not released when job scheduler killed if JS job started another tcpip process
 
 -------------------------------------------------------------------------------------------
                      Issue1 - Don't change the servers timezone
@@ -70,7 +71,9 @@ was issued.
 For example I have a regular job to restart 'snort', and after a restart it becomes a
 child of the job scheduler service instead of being free to live its own life. As a result
 if a systemctl stop was issued against the job scheduler service using the default KillMode
-th snort application would also be killed as part of the service stopping.
+the snort application would also be killed as part of the service stoppingi (along with 
+anything regularly cycled by the scheduler to release memory such as mariadb and httpd).
+
 [root@phoenix system]# systemctl status marks_job_scheduler
 ● marks_job_scheduler.service - Marks Job Scheduler
    Loaded: loaded (/usr/lib/systemd/system/marks_job_scheduler.service; enabled; vendor preset: disabled)
@@ -98,4 +101,28 @@ be stopped by the service, so don't play with that file.
 Note: this is a perfectly valid design solution, it is in fact the same solution used
       by the crond.service file, which also does not want child processes it may start
       killed off by a systemctl stop crond.
+
+-------------------------------------------------------------------------------------------
+              Issue4 - JS port 9002 not released when job scheduler killed
+              if another tcpip process was started under scheduler control
+                               **  POSSIBLE BUG **
+  (I might update the scheduler to try to trap the kill signal one day and cleanly stop)
+-------------------------------------------------------------------------------------------
+Found in a situaltion where I stopped the job scheduler with a 'kill -9'.
+The 'snort' process which does not use port 9002 but which had been started by the scheduler
+took ownership of the port and kept it open.
+
+[root@phoenix init.d]# netstat -anp | grep 9002
+tcp        2      0 192.168.1.187:9002      0.0.0.0:*               LISTEN      3331576/snort  
+
+That should not have happened or been permitted by the operating system.
+This may be specific to the scheduler running under systemd (I have not tried when running under initd/sysv).
+
+This does not happen when the scheduler is shutdown on a controlled fashion with "sched shutdown"
+(note: sched shutdown is also issues by the supplied service file).
+
+RESOLUTION: avoid using 'kill' to stop the scheduler, always try to shut it down properly.
+
+Note: 'kill' is only ever likely to be used by me when I trash/test on my test system
+      so I am the only one likely to ever see this issue.
 

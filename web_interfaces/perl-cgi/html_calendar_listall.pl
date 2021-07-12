@@ -57,7 +57,7 @@ sub CAL_dbslist_display() {
 
     $testfail = substr( $dataline, 0, 18 );
     if ($testfail eq 'Connection refused') {
-       print '<span style="background-color: #FF0000"> **** JOB SCHEDULER IS NOT AVAILABLE **** Check with support staff</span><br><br><br>';
+       print '<span style="background-color: #FF0000"> **** JOB SCHEDULER AT IS NOT AVAILABLE **** Check with support staff</span><br><br><br>';
     }
     elsif ($calcount == 0) {
        print "<br><br>THERE ARE NO CALENDARS DEFINED IN THE CALENDAR DATABASE<br><br>\n";

@@ -8,7 +8,7 @@
 #include <sys/types.h>
 
 #define UTILS_MAX_ERRORTEXT 100
-char UTILS_errortext[UTILS_MAX_ERRORTEXT];
+extern char UTILS_errortext[UTILS_MAX_ERRORTEXT];
 
 #ifndef GLOBAL_DATA
    extern FILE *msg_log_handle; 

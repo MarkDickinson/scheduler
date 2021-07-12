@@ -12,7 +12,7 @@
    FILE *calendar_handle = NULL;
 
 /* used by config.h */
-   char config_version[41] = "SCHEDULER V1.18 (10Jul2019)";
+   char config_version[41] = "SCHEDULER V1.19 (13Jul2021)";
    char config_file[]     = "config.dat\0";
    FILE *config_handle = NULL;
 

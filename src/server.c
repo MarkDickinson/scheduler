@@ -30,6 +30,9 @@
 #include "system_type.h"
 #include "memorylib.h"
 
+/* now extern in config.h, define here */
+internal_flags pSCHEDULER_CONFIG_FLAGS;
+
 /* For testing new functions */
 /* #define BETA 1 */
 /* #define USE_BACKDOOR 1 - allows backdoor shutdown via telnet */
@@ -818,13 +821,8 @@ char * get_sock_addr( int sockfh, char *buf, size_t bufsiz ) {
    }
 
    len_inet = sizeof adr_inet;
-#ifdef GCC_MAJOR_VERSION3
-   /* The below works ok with GCC version 3.4.2 (not with 4.1.1) */
-   z = getsockname( sockfh, (struct sockaddr *)&adr_inet, &len_inet );
-#else                  
    /* else version 4 */
    z = getsockname( sockfh, (struct sockaddr *)&adr_inet, (socklen_t *)&len_inet );
-#endif
    if (z == -1) return NULL;
 
    /* convert address into a string form for display */
@@ -857,13 +855,8 @@ char * get_remote_addr( int sockfh, char * buf, size_t bufsize ) {
    }
 
    len_inet = sizeof adr_inet;
-#ifdef GCC_MAJOR_VERSION3
-   /* The below works ok with GCC version 3.4.2 (not with 4.1.1) */
-   z = getpeername( sockfh, (struct sockaddr *)&adr_inet, &len_inet );
-#else        
    /* else version 4 or above */
    z = getpeername( sockfh, (struct sockaddr *)&adr_inet, (socklen_t *)&len_inet );
-#endif
    if (z == -1) return NULL;
 
    /* convert address into a string form for display */
@@ -3611,15 +3604,9 @@ int main (int argc, char **argv, char **envp) {
       if ( FD_ISSET( listen_sock, &work_set ) ) {
          /* wait for a connect */
          connect_addr_len = sizeof connect_addr;
-#ifdef GCC_MAJOR_VERSION3
-         /* The below works ok with GCC version 3.4.2 (not with 4.1.1) */
-         connect_sock = accept( listen_sock, (struct sockaddr *)&connect_addr,
-                                &connect_addr_len );
-#else 
 		 /* version 4 or above */
          connect_sock = accept( listen_sock, (struct sockaddr *)&connect_addr,
                                 (socklen_t *)&connect_addr_len );
-#endif
          if ( connect_sock == -1 ) die("accept()", DIE_TCPIP_SETUP );
 
          /* check to ensure we havn't exceeded capacity */

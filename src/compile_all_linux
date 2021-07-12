@@ -2,6 +2,9 @@
 #
 # Syntax: ./compile_all_linux /path/to/top/of/install/tree
 #
+# WARNING: Code has been modified for GCC 10.
+#          May not compile under earlier versions anymore.
+#
 # ASSUMPTIONS: You already have a directory structure in place
 #              for the job scheduler from a previous install.
 #
@@ -11,19 +14,16 @@ MAXCC=0
 ## Where are we putting the binaries
 ## ------------------------------------------------------------------------
 ## Set the target directory
-installdir=$1
-if [ "${installdir}." = "." ];
+targetdir=$1
+if [ "${targetdir}." = "." ];
 then
    # targetdir="/opt/dickinson/js_testing/bin"
-   installdir="/opt/dickinson/scheduler"
    targetdir="/opt/dickinson/scheduler/bin"
-else
-   targetdir="${installdir}/bin"
 fi
 if [ ! -d ${targetdir} ];
 then
    echo "*error* ${targetdir} does not exist"
-   echo "The recompile expects an existing scheduler directory tree"
+   echo "The recompile expects an existing scheduler bin location (or a test directory)"
    exit 1
 fi
 
@@ -41,16 +41,6 @@ case "${systype}" in
    "SunOS") echo "#define SOLARIS" >> system_type.h ;;
    *)       echo "#define LINUX" >> system_type.h ;;
 esac
-
-## Major changes in GCC between version 3 and 4 broke the code, 
-## need to check for that as well.
-## We use the DEFINE GCC_MAJOR_VERSIONn to control which blocks
-## of the source code get compiled based on what version of the
-## compiler is being used to try to resolve those issues.
-## That is set in system_type.h AND USED BY ALL CODE MODULES.
-gcc_version=`gcc --version | grep "gcc (GCC)" | awk {'print $3'}`
-gcc_major_version=`gcc --version | grep "gcc (GCC)" | awk {'print $3'} | awk -F. {'print $1'}`
-echo "#define GCC_MAJOR_VERSION${gcc_major_version}" >> system_type.h
 
 echo "#endif" >> system_type.h
 

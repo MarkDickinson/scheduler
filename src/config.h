@@ -62,7 +62,7 @@
    extern FILE *config_handle;
 #endif
 
-internal_flags pSCHEDULER_CONFIG_FLAGS; /* config flags */
+extern internal_flags pSCHEDULER_CONFIG_FLAGS; /* config flags, defined in server.c */
 
 /* Procedure interfaces */
 

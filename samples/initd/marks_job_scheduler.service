@@ -2,11 +2,18 @@
 [Unit]
 Description=Marks Job Scheduler
 Documentation=man:jobsched_daemon(1)
-After=network.target nss-lookup.target
+After=network.target network-online.target
 
 [Service]
 Type=simple
 EnvironmentFile=/opt/dickinson/scheduler/etc/shell_vars
+# The environmentfile variables cannot be used within the service file
+# directly, but are expanded by bash so we use bash to start the application.
+# This does mean we cannot use the environmentfile to set the working directory
+# so we must 'cd' to it in the start command. Note also the variables are only
+# exposed to the execstrart/execstop fields and not passed to any child scripts
+# (to pass to child scripts you would need to list them in a PassEnvironment entry also)
+WorkingDirectory=/opt/dickinson/scheduler
 ExecStart=/bin/bash -c 'cd ${SCHED_BASE_DIR};${SCHED_BASE_DIR}/bin/jobsched_daemon ${SCHED_PORT} ${SCHED_IPADDR}'
 ExecStop=/bin/bash -c 'cat ${SCHED_BASE_DIR}/etc/stop_cmds | ${SCHED_BASE_DIR}/bin/jobsched_cmd ${SCHED_PORT} ${SCHED_IPADDR}'
 RuntimeDirectory=y

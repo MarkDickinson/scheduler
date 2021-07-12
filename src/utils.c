@@ -21,6 +21,9 @@
 #include <stdarg.h>
 #endif
 
+/* made extern in utils.h for gcc10 */
+char UTILS_errortext[UTILS_MAX_ERRORTEXT];
+
 /* --------------------------------------------------
    -------------------------------------------------- */
 void UTILS_set_message( const char *msgstring ) {
