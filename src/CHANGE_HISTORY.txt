@@ -16,9 +16,22 @@ Change Type Key: (S) Security change
                  (N) New program included
 
 
+Fixes Since V1.20
+-----------------
+None: Version V1.20 is this release.
+
+Fixes Since V1.19
+-----------------
+2022/11/25 - (*) Buffer areas used for parsing add job requests were too
+                 small to handle a dependency parm containing five file
+                 names with long paths. These are now handled.
+
 Fixes Since V1.18
 -----------------
-None: Version V1.18 is this release.
+2021/07/13 - (+) Changes to source code to enable it to compile
+                 under GCC 10. No functional changes or bug fixes,
+                 just changes to handle stricter requirements of the
+                 new compiler version.
 
 Fixes Since V1.17
 -----------------

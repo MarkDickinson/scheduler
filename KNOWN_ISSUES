@@ -1,10 +1,10 @@
-There is currently three known issues, which are NOT bugs, but things that may be
-of concern to you, so ducumented here as just something to be aware of.
+These are the current issues, and whether I consider them a bug or not.
 
 Issue1 - Don't change the servers timezone (not a bug)
 Issue2 - All job numbers are 000000 (not a bug)
 Issue3 - Design decision for systemd (not a bug)
-Issue4 - JS port 9002 not released when job scheduler killed if JS job started another tcpip process
+Issue4 - JS port 9002 not released when job scheduler killed if JS job started another
+         tcpip process (only seen when the scheduler starts snort)
 
 -------------------------------------------------------------------------------------------
                      Issue1 - Don't change the servers timezone
@@ -108,7 +108,7 @@ Note: this is a perfectly valid design solution, it is in fact the same solution
                                **  POSSIBLE BUG **
   (I might update the scheduler to try to trap the kill signal one day and cleanly stop)
 -------------------------------------------------------------------------------------------
-Found in a situaltion where I stopped the job scheduler with a 'kill -9'.
+Found in a situation where I stopped the job scheduler with a 'kill -9'.
 The 'snort' process which does not use port 9002 but which had been started by the scheduler
 took ownership of the port and kept it open.
 
@@ -116,13 +116,10 @@ took ownership of the port and kept it open.
 tcp        2      0 192.168.1.187:9002      0.0.0.0:*               LISTEN      3331576/snort  
 
 That should not have happened or been permitted by the operating system.
-This may be specific to the scheduler running under systemd (I have not tried when running under initd/sysv).
+This may be specific to "snort" as it monitors activity on ports.
 
 This does not happen when the scheduler is shutdown on a controlled fashion with "sched shutdown"
 (note: sched shutdown is also issues by the supplied service file).
 
 RESOLUTION: avoid using 'kill' to stop the scheduler, always try to shut it down properly.
-
-Note: 'kill' is only ever likely to be used by me when I trash/test on my test system
-      so I am the only one likely to ever see this issue.
 

@@ -427,9 +427,12 @@ int job_updatejobbuffer( char *pCmdstring, jobsfile_def *pJobRecord ) {
    CATCHUP YES|NO,CALENDAR <calname>
 */
 
+#define MAX_PARMLEN 1309
+
 /*   char sTestField[255]; */
    char sTestParmName[100];
-   char sTestParmValue[150];
+/*   char sTestParmValue[150];   2022/11/25 bug5 */
+   char sTestParmValue[MAX_PARMLEN+1];
    char sTestParmValue2[100];
    int nFieldLen, nLeadingPads, nOverrunFlag, endofdata, depcount, i, j;
    char *pSptr, *pSptr2, *workptr;
@@ -484,7 +487,7 @@ int job_updatejobbuffer( char *pCmdstring, jobsfile_def *pJobRecord ) {
    printf( "DEBUG: in job_updatejobbuffer (starting parse 2)\n" );
 #endif
          pSptr = pSptr + UTILS_count_delims( pSptr, ' ' );
-         nFieldLen = UTILS_parse_string( pSptr, ',', (char *)&sTestParmValue, 99, 
+         nFieldLen = UTILS_parse_string( pSptr, ',', (char *)&sTestParmValue, MAX_PARMLEN, 
                                          &nLeadingPads, &nOverrunFlag );
          if (nFieldLen == 0) {
             printf( "*E* Missing parameter value for field %s\n", sTestParmName );
@@ -567,7 +570,7 @@ int job_updatejobbuffer( char *pCmdstring, jobsfile_def *pJobRecord ) {
    printf( "DEBUG: in job_updatejobbuffer (starting parse3)\n" );
 #endif
          pSptr = pSptr + UTILS_count_delims( pSptr, ' ' );
-         nFieldLen = UTILS_parse_string( pSptr, '"', (char *)&sTestParmValue, 149, 
+         nFieldLen = UTILS_parse_string( pSptr, '"', (char *)&sTestParmValue, MAX_PARMLEN, 
                                          &nLeadingPads, &nOverrunFlag );
          if (nFieldLen == 0) {
             printf( "*E* Missing parameter value for field %s\n", sTestParmName );
@@ -599,7 +602,7 @@ int job_updatejobbuffer( char *pCmdstring, jobsfile_def *pJobRecord ) {
                pSptr2 = pSptr2 + UTILS_count_delims( pSptr2, ' ' );
 			   nFieldLen = 1; /* to start loop */
 			   while (nFieldLen > 0) {
-                  nFieldLen = UTILS_parse_string( pSptr2, ',', (char *)&sTestParmValue2, 99, 
+                  nFieldLen = UTILS_parse_string( pSptr2, ',', (char *)&sTestParmValue2, 99,
                                                   &nLeadingPads, &nOverrunFlag );
                   if (nFieldLen > 0) {
                      i = UTILS_get_daynumber( (char *)&sTestParmValue2 );
